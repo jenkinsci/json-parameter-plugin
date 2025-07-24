@@ -11,8 +11,8 @@ Licensed under the MIT License (see LICENSE file).
         <div name="parameter" description="${it.description}" class="jenkins-select">
             <input type="hidden" name="name" value="${it.name}"/>
             <select name="value" class="jenkins-select__input">
-                <j:if test="${it.defaultValue eq ''}">
-                    <option value="" selected="selected" disabled="disabled" hidden="hidden">
+                <j:if test="${empty it.defaultValue}">
+                    <option value="" selected="selected" disabled="disabled">
                         ${it.getEmptyOptionMessage()}
                     </option>
                 </j:if>
