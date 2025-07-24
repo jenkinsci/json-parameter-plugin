@@ -13,11 +13,14 @@ import hudson.Extension;
 import hudson.cli.CLICommand;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.io.Serial;
 import java.util.List;
 import java.util.logging.Logger;
+
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -169,6 +172,9 @@ public class JsonParameterDefinition extends ParameterDefinition {
         @POST
         public ListBoxModel doFillValueItems(@QueryParameter Source source, @QueryParameter String query)
                 throws IOException, InterruptedException {
+
+            Jenkins.get().checkPermission(Jenkins.SYSTEM_READ);
+
             ListBoxModel model = new ListBoxModel();
 
             String json = "";
