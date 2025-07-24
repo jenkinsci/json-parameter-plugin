@@ -13,13 +13,11 @@ import hudson.Extension;
 import hudson.cli.CLICommand;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
-import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.io.Serial;
 import java.util.List;
 import java.util.logging.Logger;
-
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
