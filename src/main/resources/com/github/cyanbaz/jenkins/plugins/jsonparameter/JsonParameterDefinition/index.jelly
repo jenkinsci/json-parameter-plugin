@@ -1,0 +1,32 @@
+<!--
+Copyright (c) 2025 Caner Yanbaz
+Licensed under the MIT License (see LICENSE file).
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <j:set var="descriptor" value="${it.descriptor}"/>
+    <j:set var="source" value="${it.source}"/>
+    <j:set var="query" value="${it.query}"/>
+    <f:entry title="${it.name}" description="${it.description}">
+        <div name="parameter" description="${it.description}" class="jenkins-select">
+            <input type="hidden" name="name" value="${it.name}"/>
+            <select name="value" class="jenkins-select__input">
+                <j:if test="${it.defaultValue eq ''}">
+                    <option value="" selected="selected" disabled="disabled" hidden="hidden">
+                        ${it.getEmptyOptionMessage()}
+                    </option>
+                </j:if>
+                <j:forEach var="json" items="${it.descriptor.doFillValueItems(source, query)}">
+                    <j:choose>
+                        <j:when test="${it.defaultValue eq json.name}">
+                            <option value="${json.name}" selected="selected">${json.value}</option>
+                        </j:when>
+                        <j:otherwise>
+                            <option value="${json.name}">${json.value}</option>
+                        </j:otherwise>
+                    </j:choose>
+                </j:forEach>
+            </select>
+        </div>
+    </f:entry>
+</j:jelly>

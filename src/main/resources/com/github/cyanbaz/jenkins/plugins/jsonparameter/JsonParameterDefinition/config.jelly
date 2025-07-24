@@ -1,0 +1,56 @@
+<!--
+Copyright (c) 2025 Caner Yanbaz
+Licensed under the MIT License (see LICENSE file).
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry title="${%parameter.name.label}" field="name">
+        <f:textbox/>
+    </f:entry>
+    <f:entry title="${%parameter.description.label}" field="description">
+        <f:textbox/>
+    </f:entry>
+    <f:entry title="${%parameter.defaultValue.label}" field="defaultValue">
+        <f:textbox/>
+    </f:entry>
+
+    <f:radioBlock name="source" value="CONFIG" title="${%source.type.config.label}"
+                  checked="${instance.source.value eq 'CONFIG'}">
+        <f:radioBlock name="config" value="FOLDER" title="${%source.config.folder.label}"
+                      checked="${instance.source.config.value eq 'FOLDER'}">
+
+            <div name="folder">
+                <f:entry title="${%source.config.folder.path.label}" field="path"
+                         description="${%source.config.folder.path.description}">
+                    <f:textbox value="${instance.source.config.folder.path}"/>
+                </f:entry>
+
+                <f:entry title="${%source.config.folder.id.label}" field="id"
+                         description="${%source.config.folder.id.description}">
+                    <f:textbox value="${instance.source.config.folder.id}"/>
+                </f:entry>
+            </div>
+        </f:radioBlock>
+        <f:radioBlock name="config" value="GLOBAL" title="${%source.config.global.label}"
+                      checked="${instance.source.config.value eq 'GLOBAL'}">
+            <div name="global">
+                <f:entry title="${%source.config.global.id.label}" field="id"
+                         description="${%source.config.global.id.description}">
+                    <f:textbox value="${instance.source.config.global.id}"/>
+                </f:entry>
+            </div>
+        </f:radioBlock>
+    </f:radioBlock>
+
+    <f:radioBlock name="source" value="REMOTE" title="${%source.type.remote.label}" checked="${instance.source.value eq 'REMOTE'}">
+        <div name="remote">
+            <f:entry title="${%source.remote.url.label}" field="url" description="${%source.remote.url.description}">
+                <f:textbox value="${instance.source.remote.url}"/>
+            </f:entry>
+        </div>
+    </f:radioBlock>
+
+    <f:entry title="${%parameter.query.label}" field="query">
+        <f:textbox/>
+    </f:entry>
+</j:jelly>
