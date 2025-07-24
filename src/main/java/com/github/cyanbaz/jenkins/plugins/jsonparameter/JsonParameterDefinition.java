@@ -23,6 +23,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * Represents a custom Jenkins parameter definition that extracts values from a JSON source
@@ -165,6 +166,7 @@ public class JsonParameterDefinition extends ParameterDefinition {
          * @throws IOException          If an error occurs reading the source
          * @throws InterruptedException If the operation is interrupted
          */
+        @POST
         public ListBoxModel doFillValueItems(@QueryParameter Source source, @QueryParameter String query)
                 throws IOException, InterruptedException {
             ListBoxModel model = new ListBoxModel();
