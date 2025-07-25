@@ -171,7 +171,7 @@ public class JsonParameterDefinition extends ParameterDefinition {
         public ListBoxModel doFillValueItems(@QueryParameter Source source, @QueryParameter String query)
                 throws IOException, InterruptedException {
 
-            Jenkins.get().checkPermission(Jenkins.SYSTEM_READ);
+            Jenkins.get().checkPermission(Jenkins.READ);
 
             ListBoxModel model = new ListBoxModel();
 
