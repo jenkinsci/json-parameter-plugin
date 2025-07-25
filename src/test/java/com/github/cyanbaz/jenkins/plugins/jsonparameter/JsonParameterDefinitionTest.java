@@ -1,62 +1,160 @@
+/**
+ * Copyright (c) 2025 Caner Yanbaz
+ * Licensed under the MIT License (see LICENSE file).
+ */
 package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 
-/*@WithJenkins
+import static org.junit.jupiter.api.Assertions.*;
+
+import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.ConfigValue;
+import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.SourceValue;
+import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Config;
+import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Remote;
+import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Source;
+import com.sun.net.httpserver.HttpServer;
+import hudson.model.*;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import org.htmlunit.html.*;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+@WithJenkins
 class JsonParameterDefinitionTest {
 
-    final String name = "Bobby";
+    final String name = "JSON_PARAM";
 
     @Test
-    void testConfigRoundtrip(JenkinsRule jenkins) throws Exception {
-        FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getBuildersList().add(new JsonParameterDefinition(name));
-        project = jenkins.configRoundtrip(project);
-        jenkins.assertEqualDataBoundBeans(
-                new JsonParameterDefinition(name), project.getBuildersList().get(0));
+    void given_url_when_configuration_param_return_success() {
+        // given
+        String defaultValue = "";
+        String query = "$[*].name";
+        String url = "https://localhost:8080/users.json";
+        Remote remote = new Remote(url);
+        Source source = new Source(SourceValue.REMOTE, null, remote);
+
+        // when
+        JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
+
+        // then
+        assertEquals(name, parameter.getName());
+        assertEquals(defaultValue, parameter.getDefaultValue());
+        assertEquals(url, parameter.getSource().getRemote().getUrl());
+        assertEquals(query, parameter.getQuery());
     }
 
     @Test
-    void testConfigRoundtripFrench(JenkinsRule jenkins) throws Exception {
-        FreeStyleProject project = jenkins.createFreeStyleProject();
-        JsonParameterDefinition builder = new JsonParameterDefinition(name);
-        builder.setUseFrench(true);
-        project.getBuildersList().add(builder);
-        project = jenkins.configRoundtrip(project);
+    void given_global_config_id_when_configuration_param_return_success() {
+        // given
+        String name = "JSON_PARAM";
+        String defaultValue = "";
+        String query = "$[*].name";
+        String id = "12345";
+        Config.Global global = new Config.Global(id);
+        Config config = new Config(ConfigValue.GLOBAL, null, global);
+        Source source = new Source(SourceValue.CONFIG, config, null);
 
-        JsonParameterDefinition lhs = new JsonParameterDefinition(name);
-        lhs.setUseFrench(true);
-        jenkins.assertEqualDataBoundBeans(lhs, project.getBuildersList().get(0));
+        // when
+        JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
+
+        // then
+        assertEquals(name, parameter.getName());
+        assertEquals(defaultValue, parameter.getDefaultValue());
+        assertEquals(id, parameter.getSource().getConfig().getGlobal().getId());
+        assertEquals(query, parameter.getQuery());
     }
 
     @Test
-    void testBuild(JenkinsRule jenkins) throws Exception {
-        FreeStyleProject project = jenkins.createFreeStyleProject();
-        JsonParameterDefinition builder = new JsonParameterDefinition(name);
-        project.getBuildersList().add(builder);
+    void given_folder_config_id_when_configuration_param_return_success() {
+        // given
+        String name = "JSON_PARAM";
+        String defaultValue = "";
+        String query = "$[*].name";
+        String path = "path";
+        String id = "12345";
+        Config.Folder folder = new Config.Folder(path, id);
+        Config config = new Config(ConfigValue.FOLDER, folder, null);
+        Source source = new Source(SourceValue.CONFIG, config, null);
 
-        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
-        jenkins.assertLogContains("Hello, " + name, build);
+        // when
+        JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
+
+        // then
+        assertEquals(name, parameter.getName());
+        assertEquals(defaultValue, parameter.getDefaultValue());
+        assertEquals(path, parameter.getSource().getConfig().getFolder().getPath());
+        assertEquals(id, parameter.getSource().getConfig().getFolder().getId());
+        assertEquals(query, parameter.getQuery());
     }
 
     @Test
-    void testBuildFrench(JenkinsRule jenkins) throws Exception {
-        FreeStyleProject project = jenkins.createFreeStyleProject();
-        JsonParameterDefinition builder = new JsonParameterDefinition(name);
-        builder.setUseFrench(true);
-        project.getBuildersList().add(builder);
+    void given_valid_url_when_configuration_param_return_success(JenkinsRule jenkins) throws Exception {
+        // given
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        String json;
+        try (InputStream in = getClass().getResourceAsStream("/users.json")) {
+            if (in == null) {
+                throw new FileNotFoundException("users.json not found in test resources");
+            }
+            json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        server.createContext("/users", exchange -> {
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, json.length());
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(json.getBytes(StandardCharsets.UTF_8));
+            }
+        });
+        server.setExecutor(null);
+        server.start();
 
-        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
-        jenkins.assertLogContains("Bonjour, " + name, build);
-    }
+        try {
+            int port = server.getAddress().getPort();
+            String mockUrl = "http://localhost:" + port + "/users";
 
-    @Test
-    void testScriptedPipeline(JenkinsRule jenkins) throws Exception {
-        String agentLabel = "my-agent";
-        jenkins.createOnlineSlave(Label.get(agentLabel));
-        WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-scripted-pipeline");
-        String pipelineScript = "node {greet '" + name + "'}";
-        job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
-        WorkflowRun completedBuild = jenkins.assertBuildStatusSuccess(job.scheduleBuild2(0));
-        String expectedString = "Hello, " + name + "!";
-        jenkins.assertLogContains(expectedString, completedBuild);
+            String defaultValue = "";
+            String query = "$[*].name";
+            String value = "Ervin Howell";
+            Remote remote = new Remote(mockUrl);
+            Source source = new Source(SourceValue.REMOTE, null, remote);
+            JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
+
+            FreeStyleProject project = jenkins.createFreeStyleProject();
+            project.addProperty(new ParametersDefinitionProperty(parameter));
+
+            // when
+            try (JenkinsRule.WebClient webClient = jenkins.createWebClient()) {
+                webClient.setThrowExceptionOnFailingStatusCode(false);
+                HtmlPage page = webClient.goTo("job/" + project.getName() + "/build");
+
+                HtmlSelect select = page.getElementByName("value");
+                HtmlOption option = select.getOptions().stream()
+                        .filter(o -> o.getText().contains(value))
+                        .findFirst()
+                        .orElseThrow(() -> new AssertionError("Option '" + value + "' not found"));
+                select.setSelectedAttribute(option, true);
+
+                HtmlButton buildButton = page.querySelector(".jenkins-button--primary");
+                buildButton.click();
+
+                jenkins.waitUntilNoActivity();
+
+                FreeStyleBuild build = project.getLastBuild();
+                jenkins.assertBuildStatusSuccess(build);
+
+                // then
+                assertNotNull(build);
+                ParametersAction params = build.getAction(ParametersAction.class);
+                ParameterValue val = params.getParameter(name);
+                assertNotNull(val);
+                assertEquals(value, ((StringParameterValue) val).value);
+            }
+        } finally {
+            server.stop(0);
+        }
     }
-}*/
+}
