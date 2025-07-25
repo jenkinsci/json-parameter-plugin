@@ -6,11 +6,6 @@ package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.ConfigValue;
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.SourceValue;
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Config;
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Remote;
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Source;
 import com.sun.net.httpserver.HttpServer;
 import hudson.model.*;
 import java.io.FileNotFoundException;
@@ -34,8 +29,7 @@ class JsonParameterDefinitionTest {
         String defaultValue = "";
         String query = "$[*].name";
         String url = "https://localhost:8080/users.json";
-        Remote remote = new Remote(url);
-        Source source = new Source(SourceValue.REMOTE, null, remote);
+        JsonSource source = new RemoteSource(url);
 
         // when
         JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
@@ -43,7 +37,6 @@ class JsonParameterDefinitionTest {
         // then
         assertEquals(name, parameter.getName());
         assertEquals(defaultValue, parameter.getDefaultValue());
-        assertEquals(url, parameter.getSource().getRemote().getUrl());
         assertEquals(query, parameter.getQuery());
     }
 
@@ -54,9 +47,7 @@ class JsonParameterDefinitionTest {
         String defaultValue = "";
         String query = "$[*].name";
         String id = "12345";
-        Config.Global global = new Config.Global(id);
-        Config config = new Config(ConfigValue.GLOBAL, null, global);
-        Source source = new Source(SourceValue.CONFIG, config, null);
+        JsonSource source = new ConfigFileSource(false, null, id);
 
         // when
         JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
@@ -64,7 +55,6 @@ class JsonParameterDefinitionTest {
         // then
         assertEquals(name, parameter.getName());
         assertEquals(defaultValue, parameter.getDefaultValue());
-        assertEquals(id, parameter.getSource().getConfig().getGlobal().getId());
         assertEquals(query, parameter.getQuery());
     }
 
@@ -76,9 +66,7 @@ class JsonParameterDefinitionTest {
         String query = "$[*].name";
         String path = "path";
         String id = "12345";
-        Config.Folder folder = new Config.Folder(path, id);
-        Config config = new Config(ConfigValue.FOLDER, folder, null);
-        Source source = new Source(SourceValue.CONFIG, config, null);
+        JsonSource source = new ConfigFileSource(true, path, id);
 
         // when
         JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
@@ -86,8 +74,6 @@ class JsonParameterDefinitionTest {
         // then
         assertEquals(name, parameter.getName());
         assertEquals(defaultValue, parameter.getDefaultValue());
-        assertEquals(path, parameter.getSource().getConfig().getFolder().getPath());
-        assertEquals(id, parameter.getSource().getConfig().getFolder().getId());
         assertEquals(query, parameter.getQuery());
     }
 
@@ -119,8 +105,7 @@ class JsonParameterDefinitionTest {
             String defaultValue = "";
             String query = "$[*].name";
             String value = "Ervin Howell";
-            Remote remote = new Remote(mockUrl);
-            Source source = new Source(SourceValue.REMOTE, null, remote);
+            JsonSource source = new RemoteSource(mockUrl);
             JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
 
             FreeStyleProject project = jenkins.createFreeStyleProject();

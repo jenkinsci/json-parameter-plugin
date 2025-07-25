@@ -4,31 +4,15 @@
  */
 package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.ConfigValue;
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.SourceValue;
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Source;
-import com.github.cyanbaz.jenkins.plugins.jsonparameter.resolver.JsonResolver;
-import com.jayway.jsonpath.JsonPath;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.cli.CLICommand;
-import hudson.model.Item;
-import hudson.model.Job;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.util.ListBoxModel;
-import java.io.IOException;
+import hudson.model.*;
 import java.io.Serial;
-import java.util.List;
-import java.util.logging.Logger;
-import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest2;
-import org.kohsuke.stapler.verb.POST;
 
 /**
  * Represents a custom Jenkins parameter definition that extracts values from a JSON source
@@ -41,13 +25,11 @@ import org.kohsuke.stapler.verb.POST;
  */
 public class JsonParameterDefinition extends ParameterDefinition {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonParameterDefinition.class.getName());
-
     @Serial
     private static final long serialVersionUID = 1L;
 
     private final String defaultValue;
-    private final Source source;
+    private final JsonSource source;
     private final String query;
 
     /**
@@ -59,7 +41,7 @@ public class JsonParameterDefinition extends ParameterDefinition {
      * @param query        JSONPath query used to extract dropdown values
      */
     @DataBoundConstructor
-    public JsonParameterDefinition(String name, String defaultValue, Source source, String query) {
+    public JsonParameterDefinition(String name, String defaultValue, JsonSource source, String query) {
         super(name);
         this.defaultValue = defaultValue;
         this.source = source;
@@ -70,7 +52,7 @@ public class JsonParameterDefinition extends ParameterDefinition {
         return defaultValue;
     }
 
-    public Source getSource() {
+    public JsonSource getSource() {
         return source;
     }
 
@@ -90,12 +72,11 @@ public class JsonParameterDefinition extends ParameterDefinition {
     /**
      * Returns the default parameter value as configured.
      *
-     * @return JsonParameterValue with default value
+     * @return StringParameterValue with default value
      */
     @Override
     public ParameterValue getDefaultParameterValue() {
-        LOGGER.info(defaultValue);
-        return new JsonParameterValue(getName(), defaultValue);
+        return new StringParameterValue(getName(), defaultValue);
     }
 
     /**
@@ -103,7 +84,7 @@ public class JsonParameterDefinition extends ParameterDefinition {
      *
      * @param req The stapler request
      * @param jo  The submitted JSON object
-     * @return A new JsonParameterValue instance
+     * @return A new StringParameterValue instance
      */
     @Override
     public ParameterValue createValue(StaplerRequest2 req, JSONObject jo) {
@@ -112,20 +93,20 @@ public class JsonParameterDefinition extends ParameterDefinition {
         if (value instanceof String) {
             stringValue = (String) value;
         }
-        return new JsonParameterValue(getName(), stringValue);
+        return new StringParameterValue(getName(), stringValue);
     }
 
     /**
      * Creates a parameter value from a standard web form submission.
      *
      * @param req The stapler request
-     * @return A new JsonParameterValue instance
+     * @return A new StringParameterValue instance
      */
     @Override
     public ParameterValue createValue(StaplerRequest2 req) {
         String[] value = req.getParameterValues(getName());
         String result = (value == null || value.length == 0 || value[0].isEmpty()) ? defaultValue : value[0];
-        return new JsonParameterValue(getName(), result);
+        return new StringParameterValue(getName(), result);
     }
 
     /**
@@ -133,14 +114,14 @@ public class JsonParameterDefinition extends ParameterDefinition {
      *
      * @param command The CLI command
      * @param value   The CLI argument provided
-     * @return A new JsonParameterValue instance
+     * @return A new StringParameterValue instance
      */
     @Override
     public ParameterValue createValue(CLICommand command, String value) {
         if (value == null || value.isEmpty()) {
             return getDefaultParameterValue();
         } else {
-            return new JsonParameterValue(getName(), value);
+            return new StringParameterValue(getName(), value);
         }
     }
 
@@ -160,52 +141,6 @@ public class JsonParameterDefinition extends ParameterDefinition {
         @NonNull
         public String getDisplayName() {
             return "JSON Parameter";
-        }
-
-        /**
-         * Populates the dropdown in the UI with values extracted from the configured JSON source.
-         *
-         * @param source The configured source (file or remote)
-         * @param query  The JSONPath query to apply
-         * @return A ListBoxModel containing the dropdown options
-         * @throws IOException          If an error occurs reading the source
-         * @throws InterruptedException If the operation is interrupted
-         */
-        @POST
-        public ListBoxModel doFillValueItems(@QueryParameter Source source, @QueryParameter String query)
-                throws IOException, InterruptedException {
-
-            Jenkins.get().checkPermission(Jenkins.READ);
-            ListBoxModel model = new ListBoxModel();
-
-            StaplerRequest2 req = Stapler.getCurrentRequest2();
-            if (req != null) {
-                Item item = req.findAncestorObject(Item.class);
-                if (item instanceof Job<?, ?> job) {
-                    String fullName = job.getFullName();
-                    if (source.getValue() == SourceValue.CONFIG
-                            && source.getConfig().getValue() == ConfigValue.FOLDER
-                            && !fullName.startsWith(
-                                    source.getConfig().getFolder().getPath())) {
-                        model.add("", Messages.folder_invalid());
-                        return model;
-                    }
-                }
-            }
-
-            String json = "";
-            if (source.getValue() == SourceValue.CONFIG) {
-                json = JsonResolver.getJsonDataFromConfigFile(source.getConfig());
-            } else if (source.getValue() == SourceValue.REMOTE) {
-                json = JsonResolver.getJsonDataFromUrl(source.getRemote());
-            }
-
-            List<String> values = JsonPath.read(json, query);
-
-            for (String value : values) {
-                model.add(value, value);
-            }
-            return model;
         }
     }
 }
