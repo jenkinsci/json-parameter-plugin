@@ -76,13 +76,16 @@ public final class JsonResolver {
             }
         }
 
-        org.jenkinsci.lib.configprovider.model.Config globalConfig =
-                GlobalConfigFiles.get().getById(config.getGlobal().getId());
-        if (globalConfig != null) {
-            return globalConfig.content;
+        if (config.getValue() == ConfigValue.GLOBAL
+                && config.getGlobal() != null
+                && config.getGlobal().getId() != null) {
+            org.jenkinsci.lib.configprovider.model.Config globalConfig =
+                    GlobalConfigFiles.get().getById(config.getGlobal().getId());
+            if (globalConfig != null) {
+                return globalConfig.content;
+            }
         }
 
-        throw new IllegalArgumentException(
-                "Config with ID " + config.getGlobal().getId() + " not found in folder or global context.");
+        throw new IllegalArgumentException("Config not found in folder or global context.");
     }
 }

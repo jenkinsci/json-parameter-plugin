@@ -4,6 +4,7 @@
  */
 package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 
+import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.ConfigValue;
 import com.github.cyanbaz.jenkins.plugins.jsonparameter.enumeration.SourceValue;
 import com.github.cyanbaz.jenkins.plugins.jsonparameter.model.Source;
 import com.github.cyanbaz.jenkins.plugins.jsonparameter.resolver.JsonResolver;
@@ -11,6 +12,8 @@ import com.jayway.jsonpath.JsonPath;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.cli.CLICommand;
+import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.util.ListBoxModel;
@@ -23,6 +26,7 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.verb.POST;
 
@@ -172,8 +176,22 @@ public class JsonParameterDefinition extends ParameterDefinition {
                 throws IOException, InterruptedException {
 
             Jenkins.get().checkPermission(Jenkins.READ);
-
             ListBoxModel model = new ListBoxModel();
+
+            StaplerRequest2 req = Stapler.getCurrentRequest2();
+            if (req != null) {
+                Item item = req.findAncestorObject(Item.class);
+                if (item instanceof Job<?, ?> job) {
+                    String fullName = job.getFullName();
+                    if (source.getValue() == SourceValue.CONFIG
+                            && source.getConfig().getValue() == ConfigValue.FOLDER
+                            && !fullName.startsWith(
+                                    source.getConfig().getFolder().getPath())) {
+                        model.add("", Messages.folder_invalid());
+                        return model;
+                    }
+                }
+            }
 
             String json = "";
             if (source.getValue() == SourceValue.CONFIG) {
