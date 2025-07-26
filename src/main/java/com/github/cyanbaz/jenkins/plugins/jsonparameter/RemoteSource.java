@@ -13,7 +13,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -59,13 +58,7 @@ public class RemoteSource extends JsonSource {
 
         HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
 
-        HttpClient client;
-        ProxyConfiguration proxyConfig = Jenkins.get().proxy;
-        if (proxyConfig != null) {
-            client = proxyConfig.newHttpClient();
-        } else {
-            client = HttpClient.newHttpClient();
-        }
+        HttpClient client = ProxyConfiguration.newHttpClient();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 

@@ -9,13 +9,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Item;
-import java.util.List;
-import jenkins.model.Jenkins;
+import hudson.model.ItemGroup;
+import hudson.model.Job;
+import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.folder.FolderConfigFileProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest2;
 
 /**
  * A {@link JsonSource} implementation that loads JSON content from a Jenkins Config File,
@@ -73,37 +73,28 @@ public class ConfigFileSource extends JsonSource {
     @Override
     public String loadJson() {
         if (folderScoped) {
-            AbstractFolder<?> folder = Jenkins.get().getItemByFullName(folderPath, AbstractFolder.class);
-            if (folder == null) {
-                throw new IllegalArgumentException("Folder not found: " + folderPath);
-            }
+            Job<?, ?> job = Stapler.getCurrentRequest2().findAncestorObject(Job.class);
+            if (job != null) {
+                ItemGroup<?> parent = job.getParent();
 
-            StaplerRequest2 req = Stapler.getCurrentRequest2();
-            if (req != null) {
-                Item item = req.findAncestorObject(Item.class);
-                if (item != null && item.getFullName() != null) {
-                    String jobPath = item.getFullName();
-
-                    List<String> jobSegments = List.of(jobPath.split("/"));
-                    List<String> folderSegments = List.of(folderPath.split("/"));
-
-                    if (folderSegments.size() > jobSegments.size()
-                            || !jobSegments.subList(0, folderSegments.size()).equals(folderSegments)) {
-                        throw new IllegalStateException(Messages.folder_invalid());
+                while (parent instanceof Item parentItem) {
+                    if (parentItem.getFullName().equals(folderPath)) {
+                        FolderConfigFileProperty prop =
+                                ((AbstractFolder<?>) parentItem).getProperties().get(FolderConfigFileProperty.class);
+                        if (prop != null) {
+                            Config config = prop.getById(configId);
+                            if (config != null) {
+                                return config.content;
+                            }
+                        }
+                        break;
                     }
+                    parent = parentItem.getParent();
                 }
-            }
-
-            FolderConfigFileProperty prop = folder.getProperties().get(FolderConfigFileProperty.class);
-            if (prop != null) {
-                org.jenkinsci.lib.configprovider.model.Config folderConfig = prop.getById(configId);
-                if (folderConfig != null) {
-                    return folderConfig.content;
-                }
+                throw new IllegalStateException(Messages.error_folder_scope());
             }
         } else {
-            org.jenkinsci.lib.configprovider.model.Config globalConfig =
-                    GlobalConfigFiles.get().getById(configId);
+            Config globalConfig = GlobalConfigFiles.get().getById(configId);
             if (globalConfig != null) {
                 return globalConfig.content;
             }

@@ -7,29 +7,28 @@ Licensed under the MIT License (see LICENSE file).
     <j:set var="descriptor" value="${it.descriptor}"/>
     <j:set var="source" value="${it.source}"/>
     <j:set var="query" value="${it.query}"/>
-    <j:set var="options" value="${it.source.loadOptions(it.query)}"/>
+    <j:set var="result" value="${it.source.loadOptions(it.query)}"/>
     <f:entry title="${it.name}" description="${it.description}">
-        <div name="parameter" description="${it.description}" class="jenkins-select">
-            <input type="hidden" name="name" value="${it.name}"/>
-            <select name="value" class="jenkins-select__input">
-                <j:choose>
-                    <j:when test="${options.size() == 1 and empty options[0].name}">
-                        <option value="" selected="selected" disabled="disabled">
-                            ${options[0].value}
-                        </option>
-                    </j:when>
-                    <j:otherwise>
+        <j:choose>
+            <j:when test="${not result.success}">
+                <div class="error">${result.errorMessage}</div>
+            </j:when>
+            <j:otherwise>
+                <div name="parameter" description="${it.description}" class="jenkins-select">
+                    <input type="hidden" name="name" value="${it.name}"/>
+                    <select name="value" class="jenkins-select__input">
                         <j:if test="${empty it.defaultValue}">
                             <option value="" selected="selected" disabled="disabled">
-                                ${it.getEmptyOptionMessage()}
+                                ${it.getPlaceholderMessage()}
                             </option>
                         </j:if>
-                        <j:forEach var="json" items="${options}">
-                            <f:option value="${json.value}" selected="${it.defaultValue eq json.value}">${json.name}</f:option>
+                        <j:forEach var="json" items="${result.value}">
+                            <f:option value="${json.value}" selected="${it.defaultValue eq json.value}">${json.name}
+                            </f:option>
                         </j:forEach>
-                    </j:otherwise>
-                </j:choose>
-            </select>
-        </div>
+                    </select>
+                </div>
+            </j:otherwise>
+        </j:choose>
     </f:entry>
 </j:jelly>

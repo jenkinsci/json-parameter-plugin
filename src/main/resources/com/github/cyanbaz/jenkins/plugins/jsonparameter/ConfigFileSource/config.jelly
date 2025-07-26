@@ -8,11 +8,11 @@ Licensed under the MIT License (see LICENSE file).
         <f:checkbox/>
     </f:entry>
 
-    <f:entry title="${%folder.path.label}" field="folderPath">
+    <f:entry title="${%folder.path.label}" field="folderPath" description="${%folder.path.description}">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%config.file.id.label}" field="configId">
+    <f:entry title="${%config.file.id.label}" field="configId" description="${%config.file.id.description}">
         <f:textbox/>
     </f:entry>
 </j:jelly>

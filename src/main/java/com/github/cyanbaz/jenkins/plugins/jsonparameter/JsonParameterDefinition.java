@@ -65,8 +65,8 @@ public class JsonParameterDefinition extends ParameterDefinition {
      *
      * @return A localized empty option message
      */
-    public String getEmptyOptionMessage() {
-        return Messages.option_empty();
+    public String getPlaceholderMessage() {
+        return Messages.placeholder_select_option();
     }
 
     /**

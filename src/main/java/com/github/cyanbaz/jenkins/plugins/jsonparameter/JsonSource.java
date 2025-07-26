@@ -53,20 +53,21 @@ public abstract class JsonSource extends AbstractDescribableImpl<JsonSource> imp
      *
      * @param query a valid JSONPath expression
      * @return a populated {@link ListBoxModel}
-     * @throws IOException          if reading JSON fails
-     * @throws InterruptedException if the operation is interrupted
      */
-    public ListBoxModel loadOptions(String query) throws IOException, InterruptedException {
+    public JsonResult<ListBoxModel> loadOptions(String query) {
         ListBoxModel model = new ListBoxModel();
         try {
             String json = loadJson();
             List<String> values = JsonPath.read(json, query);
+            if (values.isEmpty()) {
+                return JsonResult.failure(Messages.error_no_data());
+            }
             for (String value : values) {
                 model.add(value, value);
             }
-        } catch (IllegalStateException e) {
-            model.add("", Messages.folder_invalid());
+        } catch (Exception e) {
+            return JsonResult.failure(e.getMessage());
         }
-        return model;
+        return JsonResult.success(model);
     }
 }
