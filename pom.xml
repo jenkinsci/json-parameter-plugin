@@ -11,7 +11,7 @@
 
   <groupId>io.jenkins.plugins</groupId>
   <artifactId>json-parameter</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
 
   <name>JSON Parameter</name>
@@ -26,6 +26,13 @@
     </license>
   </licenses>
 
+  <developers>
+    <developer>
+      <id>cyanbaz</id>
+      <name>Caner Yanbaz</name>
+    </developer>
+  </developers>
+
   <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
     <connection>scm:git:https://github.com/${gitHubRepo}</connection>
     <developerConnection>scm:git:https://github.com/${gitHubRepo}</developerConnection>
@@ -34,8 +41,7 @@
   </scm>
 
   <properties>
-    <revision>1.0</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist>999999-SNAPSHOT</changelist>
 
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
     <jenkins.baseline>2.504</jenkins.baseline>
