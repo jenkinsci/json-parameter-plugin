@@ -163,7 +163,7 @@ public class ConfigFileSource extends JsonSource {
         }
 
         /**
-         * Provides a list of available configuration file IDs for selection in the UI.
+         * Provides a list of available config file IDs for selection in the UI.
          * <p>
          * This method retrieves all config files defined in the Config File Provider plugin,
          * including those defined at the folder level.
