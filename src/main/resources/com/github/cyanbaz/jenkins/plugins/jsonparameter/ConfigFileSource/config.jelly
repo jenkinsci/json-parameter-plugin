@@ -13,6 +13,6 @@ Licensed under the MIT License (see LICENSE file).
     </f:entry>
 
     <f:entry title="${%config.file.id.label}" field="configId" description="${%config.file.id.description}">
-        <f:select/>
+        <f:textbox/>
     </f:entry>
 </j:jelly>
