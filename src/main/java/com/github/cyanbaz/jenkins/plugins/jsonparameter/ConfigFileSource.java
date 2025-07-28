@@ -11,17 +11,11 @@ import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Job;
-import hudson.util.ListBoxModel;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.folder.FolderConfigFileProperty;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.verb.POST;
 
 /**
  * A {@link JsonSource} implementation that loads JSON content from a Jenkins Config File,
@@ -70,79 +64,43 @@ public class ConfigFileSource extends JsonSource {
     /**
      * Loads the JSON content from the configured Jenkins config file.
      * <p>
-     * If {@code folderScoped} is true, the method resolves the folder using the configured path,
-     * ensures the current job is inside that folder, and retrieves the corresponding config.
-     * If {@code folderScoped} is false, it attempts to resolve the config globally.
+     * If folder-scoped, it checks that the current job is located within the configured folder path.
      *
      * @return the raw JSON content as a string
      * @throws IllegalArgumentException if the config file is not found or not accessible
-     * @throws IllegalStateException if folder-scoped access fails (e.g. folder mismatch or missing permission)
+     * @throws IllegalStateException    if the current job is not within the allowed folder scope
      */
     @Override
     public String loadJson() {
         if (folderScoped) {
-            return loadFolderScopedJson().orElseThrow(() -> new IllegalStateException(Messages.error_folder_scope()));
-        } else {
-            return loadGlobalJson()
-                    .orElseThrow(
-                            () -> new IllegalArgumentException(Messages.error_config_id_not_found_global(configId)));
-        }
-    }
+            Job<?, ?> job = Stapler.getCurrentRequest2().findAncestorObject(Job.class);
+            if (job != null) {
+                ItemGroup<?> parent = job.getParent();
 
-    /**
-     * Attempts to load the JSON content from a folder-scoped configuration file,
-     * ensuring the current job is located within the configured folder.
-     *
-     * @return an {@link Optional} containing the JSON content if found
-     */
-    private Optional<String> loadFolderScopedJson() {
-        Job<?, ?> job = Stapler.getCurrentRequest2().findAncestorObject(Job.class);
-        if (job == null) {
-            return Optional.empty();
-        }
-
-        AbstractFolder<?> folder = findMatchingFolder(job.getParent());
-        if (folder == null) {
-            return Optional.empty();
-        }
-
-        FolderConfigFileProperty prop = folder.getProperties().get(FolderConfigFileProperty.class);
-        if (prop == null) {
-            return Optional.empty();
-        }
-
-        Config config = prop.getById(configId);
-        if (config == null) {
-            throw new IllegalArgumentException(Messages.error_config_id_not_found(configId));
-        }
-        return Optional.of(config.content);
-    }
-
-    /**
-     * Attempts to load the JSON content from a globally scoped configuration file.
-     *
-     * @return an {@link Optional} containing the JSON content if found
-     */
-    private Optional<String> loadGlobalJson() {
-        Config globalConfig = GlobalConfigFiles.get().getById(configId);
-        return Optional.ofNullable(globalConfig != null ? globalConfig.content : null);
-    }
-
-    /**
-     * Traverses the folder hierarchy upward to locate the folder matching the configured {@code folderPath}.
-     *
-     * @param start the starting point (usually the parent of the current job)
-     * @return the matching {@link AbstractFolder}, or {@code null} if not found
-     */
-    private AbstractFolder<?> findMatchingFolder(ItemGroup<?> start) {
-        ItemGroup<?> current = start;
-        while (current instanceof AbstractFolder<?> folder) {
-            if (folder.getFullName().equals(folderPath)) {
-                return folder;
+                while (parent instanceof Item parentItem) {
+                    if (parentItem.getFullName().equals(folderPath)) {
+                        FolderConfigFileProperty prop =
+                                ((AbstractFolder<?>) parentItem).getProperties().get(FolderConfigFileProperty.class);
+                        if (prop != null) {
+                            Config config = prop.getById(configId);
+                            if (config != null) {
+                                return config.content;
+                            }
+                        }
+                        break;
+                    }
+                    parent = parentItem.getParent();
+                }
+                throw new IllegalStateException(Messages.error_folder_scope());
             }
-            current = folder.getParent();
+        } else {
+            Config globalConfig = GlobalConfigFiles.get().getById(configId);
+            if (globalConfig != null) {
+                return globalConfig.content;
+            }
         }
-        return null;
+
+        throw new IllegalArgumentException("Unable to locate config file");
     }
 
     /**
@@ -160,56 +118,6 @@ public class ConfigFileSource extends JsonSource {
         @Override
         public String getDisplayName() {
             return "Jenkins Config File";
-        }
-
-        /**
-         * Provides a list of available config file IDs for selection in the UI.
-         * <p>
-         * This method retrieves all config files defined in the Config File Provider plugin,
-         * including those defined at the folder level.
-         *
-         * @param item the current Jenkins item (job or folder) to check permissions against
-         * @return a ListBoxModel containing available config file IDs
-         */
-        @POST
-        public ListBoxModel doFillConfigIdItems(@AncestorInPath Item item) {
-            ListBoxModel items = new ListBoxModel();
-            items.add(Messages.placeholder_config_file_id(), "");
-
-            if (item != null) {
-                item.checkPermission(Item.CONFIGURE);
-                Set<String> seenIds = new HashSet<>();
-                addFolderConfigs(item, items, seenIds);
-                addGlobalConfigs(items, seenIds);
-            }
-
-            return items;
-        }
-
-        private void addFolderConfigs(Item item, ListBoxModel items, Set<String> seenIds) {
-            ItemGroup<?> parent = item.getParent();
-
-            while (parent instanceof AbstractFolder<?> folder) {
-                FolderConfigFileProperty prop = folder.getProperties().get(FolderConfigFileProperty.class);
-                if (prop != null) {
-                    for (Config cfg : prop.getConfigs()) {
-                        addConfigIfValid(cfg, seenIds, items);
-                    }
-                }
-                parent = folder.getParent();
-            }
-        }
-
-        private void addGlobalConfigs(ListBoxModel items, Set<String> seenIds) {
-            for (Config cfg : GlobalConfigFiles.get().getConfigs()) {
-                addConfigIfValid(cfg, seenIds, items);
-            }
-        }
-
-        private void addConfigIfValid(Config cfg, Set<String> seenIds, ListBoxModel items) {
-            if (cfg != null && cfg.id != null && seenIds.add(cfg.id)) {
-                items.add(cfg.name + " (ID: " + cfg.id + ")", cfg.id);
-            }
         }
     }
 }
