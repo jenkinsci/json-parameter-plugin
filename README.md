@@ -69,10 +69,6 @@ When configuring a job:
 ]
 ```
 
-## Changelog
-
-📄 [Changelog](CHANGELOG.md)
-
 ## Contributing
 
 Refer to our [contribution guidelines](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md)
