@@ -29,7 +29,8 @@ class JsonParameterDefinitionTest {
         String defaultValue = "";
         String query = "$[*].name";
         String url = "https://localhost:8080/users.json";
-        JsonSource source = new RemoteSource(url);
+        String credentialsId = "credentialsId";
+        JsonSource source = new RemoteSource(url, credentialsId);
 
         // when
         JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
@@ -105,7 +106,7 @@ class JsonParameterDefinitionTest {
             String defaultValue = "";
             String query = "$[*].name";
             String value = "Ervin Howell";
-            JsonSource source = new RemoteSource(mockUrl);
+            JsonSource source = new RemoteSource(mockUrl, null);
             JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
 
             FreeStyleProject project = jenkins.createFreeStyleProject();

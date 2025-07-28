@@ -29,11 +29,10 @@ You can extract values using **JSONPath** syntax, making it easy to map dynamic 
 ### 1. Install the plugin
 
 Install via Jenkins Plugin Manager:  
-**Manage Jenkins » Plugin Manager » Available » json-parameter**
+**Manage Jenkins » Manage Jenkins » Available plugins » JSON Parameter**
 
 Requires:
 - [Config File Provider Plugin](https://plugins.jenkins.io/config-file-provider/)
-- Jenkins version ≥ 2.361.4 recommended
 
 ### 2. Add a JSON Parameter
 
@@ -59,7 +58,7 @@ When configuring a job:
 
 #### 🔹 Remote HTTP Endpoint
 - Enter a full API URL that returns JSON
-- *(Support for credentials coming soon)*
+- Select Credentials ID if required
 
 ---
 
@@ -120,7 +119,7 @@ parameters {
           description: 'List data from JSON source.', 
           defaultValue: 'Beta', 
           query: '$[*].name',
-          source: [$class: 'RemoteSource', url: 'https://dummyjson.com/api/data']
+          source: [$class: 'RemoteSource', credentialsId: 'my-id', url: 'https://dummyjson.com/api/data']
   )
 }
 ```
@@ -132,6 +131,8 @@ parameters {
 ---
 
 ### 💡 You can also generate the DSL snippet via the Pipeline Syntax Generator in Jenkins.
+
+---
 
 ## Contributing
 

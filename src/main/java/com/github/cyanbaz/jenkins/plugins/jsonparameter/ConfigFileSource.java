@@ -162,12 +162,12 @@ public class ConfigFileSource extends JsonSource {
 
         /**
          * Provides auto-completion candidates for the folder path field in the UI.
-         *
+         * <p>
          * The suggestions are limited to folder names that:
          * - Are accessible within the scope of the current item
          * - Start with the user-typed prefix
          * - Represent only direct folder names (no nested subfolders)
-         *
+         * <p>
          * This ensures both usability and security by limiting suggestions to
          * folders within the current job's hierarchy.
          *
