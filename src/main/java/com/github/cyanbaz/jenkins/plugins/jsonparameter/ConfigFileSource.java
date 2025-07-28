@@ -7,19 +7,18 @@ package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 import com.cloudbees.hudson.plugins.folder.AbstractFolder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
-import hudson.model.Descriptor;
-import hudson.model.Item;
-import hudson.model.ItemGroup;
-import hudson.model.Job;
+import hudson.model.*;
 import hudson.util.ListBoxModel;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import jenkins.model.Jenkins;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.folder.FolderConfigFileProperty;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.verb.POST;
 
@@ -125,7 +124,7 @@ public class ConfigFileSource extends JsonSource {
      */
     private Optional<String> loadGlobalJson() {
         Config globalConfig = GlobalConfigFiles.get().getById(configId);
-        return Optional.ofNullable(globalConfig != null ? globalConfig.content : null);
+        return Optional.ofNullable(globalConfig).map(cfg -> cfg.content);
     }
 
     /**
@@ -135,12 +134,11 @@ public class ConfigFileSource extends JsonSource {
      * @return the matching {@link AbstractFolder}, or {@code null} if not found
      */
     private AbstractFolder<?> findMatchingFolder(ItemGroup<?> start) {
-        ItemGroup<?> current = start;
-        while (current instanceof AbstractFolder<?> folder) {
+        while (start instanceof AbstractFolder<?> folder) {
             if (folder.getFullName().equals(folderPath)) {
                 return folder;
             }
-            current = folder.getParent();
+            start = folder.getParent();
         }
         return null;
     }
@@ -160,6 +158,50 @@ public class ConfigFileSource extends JsonSource {
         @Override
         public String getDisplayName() {
             return "Jenkins Config File";
+        }
+
+        /**
+         * Provides auto-completion candidates for the folder path field in the UI.
+         *
+         * The suggestions are limited to folder names that:
+         * - Are accessible within the scope of the current item
+         * - Start with the user-typed prefix
+         * - Represent only direct folder names (no nested subfolders)
+         *
+         * This ensures both usability and security by limiting suggestions to
+         * folders within the current job's hierarchy.
+         *
+         * @param item  the current job/item context (inferred via @AncestorInPath)
+         * @param value the partial folder path entered by the user
+         * @return      a list of matching folder paths for auto-completion
+         */
+        @POST
+        public AutoCompletionCandidates doAutoCompleteFolderPath(
+                @AncestorInPath Item item, @QueryParameter String value) {
+            AutoCompletionCandidates candidates = new AutoCompletionCandidates();
+
+            if (item != null) {
+                item.checkPermission(Item.CONFIGURE);
+
+                String prefix = value != null ? value.trim() : "";
+
+                for (AbstractFolder<?> folder : Jenkins.get().getAllItems(AbstractFolder.class)) {
+                    String fullName = folder.getFullName();
+
+                    if (item.getFullName().startsWith(fullName)) {
+
+                        if (fullName.startsWith(prefix)) {
+                            String remaining = fullName.substring(prefix.length());
+
+                            if (!remaining.contains("/")) {
+                                candidates.add(fullName);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return candidates;
         }
 
         /**

@@ -35,32 +35,37 @@ Requires:
 - [Config File Provider Plugin](https://plugins.jenkins.io/config-file-provider/)
 - Jenkins version ≥ 2.361.4 recommended
 
-### 2. Add JSON Parameter
+### 2. Add a JSON Parameter
 
 When configuring a job:
 
-1. Go to "Add Parameter" → "JSON Parameter"
-2. Fill in the following:
-    - **Name**: Internal parameter name
+1. Click **"Add Parameter"** → **"JSON Parameter"**
+2. Fill in the following fields:
+    - **Name**: Internal parameter identifier
     - **Description** *(optional)*
     - **Default Value** *(optional)*
-    - **Query**: JSONPath expression (e.g. `$[*].name`)
+    - **Query**: JSONPath expression (e.g., `$[*].name`)
 
-### 3. Choose a Source
+---
+
+### 3. Select a JSON Source
 
 #### 🔹 Config File
 - Choose between:
-    - Folder-level Config File (via `Folder Config File Property`)
-    - Global Config File
-- Specify `Config File ID` (and `Folder Path` if needed)
+    - **Folder-level** config (via `Folder Config File Property`)
+    - **Global** config
+- Provide the **Config File ID**
+- If using folder-level config, also provide the **Folder Path**
 
-#### 🔹 HTTP Request
-- Enter the full API URL returning JSON
-- *(Credential support coming soon)*
+#### 🔹 Remote HTTP Endpoint
+- Enter a full API URL that returns JSON
+- *(Support for credentials coming soon)*
 
-### 4. Example
+---
 
-**Sample JSON:**
+### 4. Examples
+
+**📦 Sample JSON**
 
 ```json
 [
@@ -68,6 +73,65 @@ When configuring a job:
   { "name": "Beta" }
 ]
 ```
+
+**🔧 Example 1: Folder-level config with placeholder**
+```groovy
+parameters {
+  jsonParam(
+          name: 'JSON_PARAM', 
+          description: 'List data from JSON source.', 
+          defaultValue: '', 
+          query: '$[*].name', 
+          source: [$class: 'ConfigFileSource', configId: 'my-id', folderPath: 'FolderA', folderScoped: true]
+  )
+}
+```
+➡️ Rendered dropdown:
+```groovy
+["-- Choose an option --", "Alpha", "Beta"]
+```
+
+---
+
+**🔧 Example 2: Global config with preselected default**
+```groovy
+parameters {
+  jsonParam(
+          name: 'JSON_PARAM', 
+          description: 'List data from JSON source.', 
+          defaultValue: 'Alpha', 
+          query: '$[*].name', 
+          source: [$class: 'ConfigFileSource', configId: 'my-id', folderPath: '', folderScoped: false]
+  )
+}
+```
+➡️ Rendered dropdown:
+```groovy
+["Alpha", "Beta"]
+```
+
+---
+
+**🔧 Example 3: HTTP JSON source**
+```groovy
+parameters {
+  jsonParam(
+          name: 'JSON_PARAM', 
+          description: 'List data from JSON source.', 
+          defaultValue: 'Beta', 
+          query: '$[*].name',
+          source: [$class: 'RemoteSource', url: 'https://dummyjson.com/api/data']
+  )
+}
+```
+➡️ Rendered dropdown:
+```groovy
+["Beta", "Alpha"]
+```
+
+---
+
+### 💡 You can also generate the DSL snippet via the Pipeline Syntax Generator in Jenkins.
 
 ## Contributing
 
