@@ -81,7 +81,7 @@ parameters {
           description: 'List data from JSON source.', 
           defaultValue: '', 
           query: '$[*].name', 
-          source: [$class: 'ConfigFileSource', configId: 'my-id', folderPath: 'FolderA', folderScoped: true]
+          source: configFileSource(configId: 'my-id', folderPath: 'FolderA', folderScoped: true)
   )
 }
 ```
@@ -100,7 +100,7 @@ parameters {
           description: 'List data from JSON source.', 
           defaultValue: 'Alpha', 
           query: '$[*].name', 
-          source: [$class: 'ConfigFileSource', configId: 'my-id', folderPath: '', folderScoped: false]
+          source: configFileSource(configId: 'my-id', folderPath: '', folderScoped: false)
   )
 }
 ```
@@ -119,7 +119,7 @@ parameters {
           description: 'List data from JSON source.', 
           defaultValue: 'Beta', 
           query: '$[*].name',
-          source: [$class: 'RemoteSource', credentialsId: 'my-id', url: 'https://dummyjson.com/api/data']
+          source: remoteSource(credentialsId: 'my-id', url: 'https://dummyjson.com/api/data')
   )
 }
 ```
