@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import jenkins.model.Jenkins;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.folder.FolderConfigFileProperty;
@@ -147,6 +148,7 @@ public class ConfigFileSource extends JsonSource {
      * Descriptor for {@link ConfigFileSource}, shown as an option in the dropdown selector.
      */
     @Extension
+    @Symbol({"configFileSource"})
     public static class DescriptorImpl extends Descriptor<JsonSource> {
 
         /**

@@ -28,6 +28,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -170,6 +171,7 @@ public class RemoteSource extends JsonSource {
      * Descriptor for the {@link RemoteSource}, used to display this option in the Jenkins UI dropdown.
      */
     @Extension
+    @Symbol({"remoteSource"})
     public static class DescriptorImpl extends Descriptor<JsonSource> {
 
         /**
