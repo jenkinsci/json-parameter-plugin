@@ -7,7 +7,7 @@ Licensed under the MIT License (see LICENSE file).
     <f:entry title="${%remote.url.label}" field="url">
         <f:textbox/>
     </f:entry>
-    <f:entry title="${%remote.credentials.title}" field="credentialsId" class="jenkins-select__input select credentials-select">
+    <f:entry title="${%remote.credentials.label}" field="credentialsId" class="jenkins-select__input select credentials-select">
         <f:select/>
     </f:entry>
 </j:jelly>
