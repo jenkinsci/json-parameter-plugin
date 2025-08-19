@@ -87,6 +87,7 @@ public class RemoteSource extends JsonSource {
      * @return the raw JSON response body as a string
      * @throws IOException          if the HTTP request fails or the status code indicates an error
      * @throws InterruptedException if the request is interrupted
+     * @throws IllegalArgumentException if the credentials ID is invalid or not found
      */
     @Override
     public String loadJson() throws IOException, InterruptedException {
@@ -97,6 +98,9 @@ public class RemoteSource extends JsonSource {
 
         if (credentialsId != null && !credentialsId.isEmpty()) {
             Credentials credentials = resolveCredentials();
+            if (credentials == null) {
+                throw new IllegalArgumentException("Credentials not found: " + credentialsId);
+            }
             String authHeader = buildAuthorizationHeader(credentials);
             builder.header("Authorization", authHeader);
         }
@@ -182,7 +186,7 @@ public class RemoteSource extends JsonSource {
         @NonNull
         @Override
         public String getDisplayName() {
-            return "Remote URL";
+            return "Remote";
         }
 
         /**
