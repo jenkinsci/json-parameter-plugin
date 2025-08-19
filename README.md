@@ -50,15 +50,16 @@ When configuring a job:
 ### 3. Select a JSON Source
 
 #### 🔹 Config File
-- Choose between:
-    - **Folder-level** config (via `Folder Config File Property`)
-    - **Global** config
 - Provide the **Config File ID**
-- If using folder-level config, also provide the **Folder Path**
+- Jenkins resolves it hierarchically:
+    - Looks in the current folder and its parents
+    - Falls back to global if not found
 
 #### 🔹 Remote HTTP Endpoint
 - Enter a full API URL that returns JSON
-- Select Credentials ID if required
+- Select a **Credentials ID** if authentication is required:
+    - Username/Password → Basic Auth (or Bearer if username is empty)
+    - Secret Text → Bearer token
 
 ---
 
@@ -81,7 +82,7 @@ parameters {
           description: 'List data from JSON source.', 
           defaultValue: '', 
           query: '$[*].name', 
-          source: configFileSource(configId: 'my-id', folderPath: 'FolderA', folderScoped: true)
+          source: configFileSource(configId: 'my-id')
   )
 }
 ```
@@ -100,7 +101,7 @@ parameters {
           description: 'List data from JSON source.', 
           defaultValue: 'Alpha', 
           query: '$[*].name', 
-          source: configFileSource(configId: 'my-id', folderPath: '', folderScoped: false)
+          source: configFileSource(configId: 'my-id')
   )
 }
 ```

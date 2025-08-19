@@ -42,25 +42,7 @@ class JsonParameterDefinitionTest {
     }
 
     @Test
-    void given_global_config_id_when_configuration_param_return_success() {
-        // given
-        String name = "JSON_PARAM";
-        String defaultValue = "";
-        String query = "$[*].name";
-        String id = "12345";
-        JsonSource source = new ConfigFileSource(id);
-
-        // when
-        JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
-
-        // then
-        assertEquals(name, parameter.getName());
-        assertEquals(defaultValue, parameter.getDefaultValue());
-        assertEquals(query, parameter.getQuery());
-    }
-
-    @Test
-    void given_folder_config_id_when_configuration_param_return_success() {
+    void given_config_id_when_configuration_param_return_success() {
         // given
         String name = "JSON_PARAM";
         String defaultValue = "";

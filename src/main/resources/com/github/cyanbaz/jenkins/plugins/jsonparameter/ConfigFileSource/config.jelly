@@ -4,7 +4,7 @@ Licensed under the MIT License (see LICENSE file).
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry title="${%config.file.id.label}" field="configId" description="${%config.file.id.description}">
+    <f:entry title="${%config.file.id.label}" field="configId">
         <f:select/>
     </f:entry>
 </j:jelly>

@@ -4,32 +4,27 @@
  */
 package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 
-import com.cloudbees.hudson.plugins.folder.AbstractFolder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.util.ListBoxModel;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
-import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.jenkinsci.plugins.configfiles.folder.FolderConfigFileProperty;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.verb.POST;
 
 /**
- * A {@link JsonSource} implementation that loads JSON content from a Jenkins Config File,
- * either globally scoped or folder-scoped.
+ * A {@link JsonSource} implementation that loads JSON content from a Jenkins Config File.
  * <p>
- * When folder-scoped, the parameter is only available to jobs located within the specified
- * folder or its subfolders.
+ * Resolution is hierarchical: Jenkins searches the current folder and its parents,
+ * falling back to globally defined configuration files if no folder-local match is found.
  * <p>
- * This class supports validation to prevent unauthorized access to configuration files
- * outside the designated folder path.
+ * This class uses the Config File Provider plugin for resolution and validation.
  *
  * @author Caner Yanbaz
  */
@@ -54,13 +49,12 @@ public class ConfigFileSource extends JsonSource {
     /**
      * Loads the JSON content from the configured Jenkins config file.
      * <p>
-     * If {@code folderScoped} is true, the method resolves the folder using the configured path,
-     * ensures the current job is inside that folder, and retrieves the corresponding config.
-     * If {@code folderScoped} is false, it attempts to resolve the config globally.
+     * The config is resolved hierarchically in the context of the current Jenkins item:
+     * nearest folder → parent folders → global.
      *
      * @return the raw JSON content as a string
-     * @throws IllegalArgumentException if the config file is not found or not accessible
-     * @throws IllegalStateException if folder-scoped access fails (e.g. folder mismatch or missing permission)
+     * @throws IllegalArgumentException if the config file or Jenkins item is not found
+     * @throws IllegalStateException if no Jenkins item is available in the current request context
      */
     @Override
     public String loadJson() {
@@ -69,11 +63,12 @@ public class ConfigFileSource extends JsonSource {
                 : null;
         if (item != null) {
             Config cfg = ConfigFiles.getByIdOrNull(item, configId);
-            if (cfg != null) {
-                return cfg.content;
+            if (cfg == null) {
+                throw new IllegalArgumentException(Messages.error_config_id_not_found(configId));
             }
+            return cfg.content;
         }
-        throw new IllegalArgumentException(Messages.error_config_id_not_found(configId));
+        throw new IllegalStateException(Messages.error_jenkins_item_not_found());
     }
 
     /**
@@ -91,17 +86,14 @@ public class ConfigFileSource extends JsonSource {
         @NonNull
         @Override
         public String getDisplayName() {
-            return "Jenkins Config File";
+            return "Config File";
         }
 
         /**
          * Provides a list of available config file IDs for selection in the UI.
          * <p>
-         * This method retrieves all config files defined in the Config File Provider plugin,
-         * including those defined at the folder level.
-         *
-         * @param item the current Jenkins item (job or folder) to check permissions against
-         * @return a ListBoxModel containing available config file IDs
+         * This uses {@link ConfigFiles#getConfigsInContext} to collect all configs visible
+         * to the given item, including folder-scoped and global definitions.
          */
         @POST
         public ListBoxModel doFillConfigIdItems(@AncestorInPath Item item) {
@@ -110,36 +102,22 @@ public class ConfigFileSource extends JsonSource {
 
             if (item != null) {
                 item.checkPermission(Item.CONFIGURE);
-                Set<String> seenIds = new HashSet<>();
-                addFolderConfigs(item, items, seenIds);
-                addGlobalConfigs(items, seenIds);
+                ItemGroup<?> itemGroup = item.getParent();
+                for (ConfigProvider provider : ConfigProvider.all()) {
+                    List<Config> configIds = ConfigFiles.getConfigsInContext(itemGroup, provider.getClass());
+                    if (!configIds.isEmpty()) {
+                        for (Config cfg : configIds) {
+                            addConfigIfValid(cfg, items);
+                        }
+                    }
+                }
             }
 
             return items;
         }
 
-        private void addFolderConfigs(Item item, ListBoxModel items, Set<String> seenIds) {
-            ItemGroup<?> parent = item.getParent();
-
-            while (parent instanceof AbstractFolder<?> folder) {
-                FolderConfigFileProperty prop = folder.getProperties().get(FolderConfigFileProperty.class);
-                if (prop != null) {
-                    for (Config cfg : prop.getConfigs()) {
-                        addConfigIfValid(cfg, seenIds, items);
-                    }
-                }
-                parent = folder.getParent();
-            }
-        }
-
-        private void addGlobalConfigs(ListBoxModel items, Set<String> seenIds) {
-            for (Config cfg : GlobalConfigFiles.get().getConfigs()) {
-                addConfigIfValid(cfg, seenIds, items);
-            }
-        }
-
-        private void addConfigIfValid(Config cfg, Set<String> seenIds, ListBoxModel items) {
-            if (cfg != null && cfg.id != null && seenIds.add(cfg.id)) {
+        private void addConfigIfValid(Config cfg, ListBoxModel items) {
+            if (cfg != null && cfg.id != null) {
                 items.add(cfg.name + " (ID: " + cfg.id + ")", cfg.id);
             }
         }
