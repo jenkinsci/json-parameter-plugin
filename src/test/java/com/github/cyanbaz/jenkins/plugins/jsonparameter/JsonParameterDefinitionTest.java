@@ -65,7 +65,6 @@ class JsonParameterDefinitionTest {
         String name = "JSON_PARAM";
         String defaultValue = "";
         String query = "$[*].name";
-        String path = "path";
         String id = "12345";
         JsonSource source = new ConfigFileSource(id);
 
