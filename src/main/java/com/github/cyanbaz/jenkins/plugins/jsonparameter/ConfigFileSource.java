@@ -10,16 +10,14 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.util.ListBoxModel;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
-import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.folder.FolderConfigFileProperty;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.verb.POST;
 
@@ -37,30 +35,16 @@ import org.kohsuke.stapler.verb.POST;
  */
 public class ConfigFileSource extends JsonSource {
 
-    private final boolean folderScoped;
-    private final String folderPath;
     private final String configId;
 
     /**
      * Constructs a new {@link ConfigFileSource} instance.
      *
-     * @param folderScoped whether the config file is folder-scoped
-     * @param folderPath   the full Jenkins path of the folder (only relevant if folderScoped is true)
      * @param configId     the ID of the config file as defined in the Config File Provider plugin
      */
     @DataBoundConstructor
-    public ConfigFileSource(boolean folderScoped, String folderPath, String configId) {
-        this.folderScoped = folderScoped;
-        this.folderPath = folderPath;
+    public ConfigFileSource(String configId) {
         this.configId = configId;
-    }
-
-    public boolean isFolderScoped() {
-        return folderScoped;
-    }
-
-    public String getFolderPath() {
-        return folderPath;
     }
 
     public String getConfigId() {
@@ -80,68 +64,16 @@ public class ConfigFileSource extends JsonSource {
      */
     @Override
     public String loadJson() {
-        if (folderScoped) {
-            return loadFolderScopedJson().orElseThrow(() -> new IllegalStateException(Messages.error_folder_scope()));
-        } else {
-            return loadGlobalJson()
-                    .orElseThrow(
-                            () -> new IllegalArgumentException(Messages.error_config_id_not_found_global(configId)));
-        }
-    }
-
-    /**
-     * Attempts to load the JSON content from a folder-scoped configuration file,
-     * ensuring the current job is located within the configured folder.
-     *
-     * @return an {@link Optional} containing the JSON content if found
-     */
-    private Optional<String> loadFolderScopedJson() {
-        Job<?, ?> job = Stapler.getCurrentRequest2().findAncestorObject(Job.class);
-        if (job == null) {
-            return Optional.empty();
-        }
-
-        AbstractFolder<?> folder = findMatchingFolder(job.getParent());
-        if (folder == null) {
-            return Optional.empty();
-        }
-
-        FolderConfigFileProperty prop = folder.getProperties().get(FolderConfigFileProperty.class);
-        if (prop == null) {
-            return Optional.empty();
-        }
-
-        Config config = prop.getById(configId);
-        if (config == null) {
-            throw new IllegalArgumentException(Messages.error_config_id_not_found(configId));
-        }
-        return Optional.of(config.content);
-    }
-
-    /**
-     * Attempts to load the JSON content from a globally scoped configuration file.
-     *
-     * @return an {@link Optional} containing the JSON content if found
-     */
-    private Optional<String> loadGlobalJson() {
-        Config globalConfig = GlobalConfigFiles.get().getById(configId);
-        return Optional.ofNullable(globalConfig).map(cfg -> cfg.content);
-    }
-
-    /**
-     * Traverses the folder hierarchy upward to locate the folder matching the configured {@code folderPath}.
-     *
-     * @param start the starting point (usually the parent of the current job)
-     * @return the matching {@link AbstractFolder}, or {@code null} if not found
-     */
-    private AbstractFolder<?> findMatchingFolder(ItemGroup<?> start) {
-        while (start instanceof AbstractFolder<?> folder) {
-            if (folder.getFullName().equals(folderPath)) {
-                return folder;
+        Item item = Stapler.getCurrentRequest2() != null
+                ? Stapler.getCurrentRequest2().findAncestorObject(Item.class)
+                : null;
+        if (item != null) {
+            Config cfg = ConfigFiles.getByIdOrNull(item, configId);
+            if (cfg != null) {
+                return cfg.content;
             }
-            start = folder.getParent();
         }
-        return null;
+        throw new IllegalArgumentException(Messages.error_config_id_not_found(configId));
     }
 
     /**
@@ -160,50 +92,6 @@ public class ConfigFileSource extends JsonSource {
         @Override
         public String getDisplayName() {
             return "Jenkins Config File";
-        }
-
-        /**
-         * Provides auto-completion candidates for the folder path field in the UI.
-         * <p>
-         * The suggestions are limited to folder names that:
-         * - Are accessible within the scope of the current item
-         * - Start with the user-typed prefix
-         * - Represent only direct folder names (no nested subfolders)
-         * <p>
-         * This ensures both usability and security by limiting suggestions to
-         * folders within the current job's hierarchy.
-         *
-         * @param item  the current job/item context (inferred via @AncestorInPath)
-         * @param value the partial folder path entered by the user
-         * @return      a list of matching folder paths for auto-completion
-         */
-        @POST
-        public AutoCompletionCandidates doAutoCompleteFolderPath(
-                @AncestorInPath Item item, @QueryParameter String value) {
-            AutoCompletionCandidates candidates = new AutoCompletionCandidates();
-
-            if (item != null) {
-                item.checkPermission(Item.CONFIGURE);
-
-                String prefix = value != null ? value.trim() : "";
-
-                for (AbstractFolder<?> folder : Jenkins.get().getAllItems(AbstractFolder.class)) {
-                    String fullName = folder.getFullName();
-
-                    if (item.getFullName().startsWith(fullName)) {
-
-                        if (fullName.startsWith(prefix)) {
-                            String remaining = fullName.substring(prefix.length());
-
-                            if (!remaining.contains("/")) {
-                                candidates.add(fullName);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return candidates;
         }
 
         /**

@@ -48,7 +48,7 @@ class JsonParameterDefinitionTest {
         String defaultValue = "";
         String query = "$[*].name";
         String id = "12345";
-        JsonSource source = new ConfigFileSource(false, null, id);
+        JsonSource source = new ConfigFileSource(id);
 
         // when
         JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
@@ -67,7 +67,7 @@ class JsonParameterDefinitionTest {
         String query = "$[*].name";
         String path = "path";
         String id = "12345";
-        JsonSource source = new ConfigFileSource(true, path, id);
+        JsonSource source = new ConfigFileSource(id);
 
         // when
         JsonParameterDefinition parameter = new JsonParameterDefinition(name, defaultValue, source, query);
