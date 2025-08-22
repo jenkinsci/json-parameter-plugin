@@ -51,7 +51,7 @@ See [Advanced JSONPath Examples](#-advanced-jsonpath-queries).
 ### 1. Install the plugin
 
 Install via Jenkins Plugin Manager:  
-**Manage Jenkins » Available plugins » JSON Parameter**
+**Manage Jenkins » Plugins » Available plugins » JSON Parameter**
 
 Requires:
 
