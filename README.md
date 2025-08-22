@@ -1,26 +1,48 @@
 # json-parameter
 
-A Jenkins plugin that allows parameters to be populated dynamically using JSON data from configurable sources.
+A Jenkins plugin that allows parameters to be populated dynamically using 
+JSON data from configurable sources.
 
-[![Build](https://ci.jenkins.io/job/Plugins/job/json-parameter-plugin/job/main/badge/icon)](https://ci.jenkins.io/job/Plugins/job/json-parameter-plugin/job/main)<br/>
-[![Contributors](https://img.shields.io/github/contributors/jenkinsci/json-parameter-plugin.svg?color=blue)](https://github.com/jenkinsci/json-parameter-plugin/graphs/contributors)<br/>
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/json-parameter.svg?color=blue&label=installations)](https://plugins.jenkins.io/json-parameter)<br/>
-[![Plugin](https://img.shields.io/jenkins/plugin/v/json-parameter.svg)](https://plugins.jenkins.io/json-parameter)<br/>
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/json-parameter-plugin.svg?label=changelog)](https://github.com/jenkinsci/json-parameter-plugin/releases/latest)
-
+[![Plugin](https://img.shields.io/jenkins/plugin/v/json-parameter.svg)](https://plugins.jenkins.io/json-parameter)
+[![Build](https://ci.jenkins.io/job/Plugins/job/json-parameter-plugin/job/main/badge/icon)](https://ci.jenkins.io/job/Plugins/job/json-parameter-plugin/job/main)
+[![Security Scan](https://github.com/jenkinsci/json-parameter-plugin/actions/workflows/jenkins-security-scan.yaml/badge.svg)](https://github.com/jenkinsci/json-parameter-plugin/actions/workflows/jenkins-security-scan.yaml)
+<!--
+[![Plugin Installs](https://img.shields.io/jenkins/plugin/i/json-parameter.svg?color=blue&label=installations)](https://plugins.jenkins.io/json-parameter)
+-->
 ---
 
 ## 🚀 Introduction
 
-This plugin defines a new parameter type: **JSON Parameter**.  
-It allows Jenkins jobs to dynamically fetch, parse, and populate values from JSON sources at runtime or configuration time.
+The JSON Parameter Plugin introduces a new parameter type for Jenkins jobs: JSON Parameter.
+It enables jobs to dynamically fetch, parse, and populate values from JSON sources at runtime 
+or configuration time.
 
 Supported JSON sources:
 
 - ✅ Jenkins **Config File Provider** (folder-based or global)
 - ✅ **Remote HTTP** endpoints
 
-You can extract values using **JSONPath** syntax, making it easy to map dynamic structures into usable parameter options.
+You can use JSONPath expressions – including filters, regex, and conditions. 
+See [Advanced JSONPath Examples](#-advanced-jsonpath-queries).
+
+---
+
+## Quick Preview
+
+### Config File Source
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/config-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/config-light.png">
+    <img alt="JSON Parameter: Config File Source" src="docs/images/config-light.png">
+</picture>
+
+### Remote HTTP Source
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/remote-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/remote-light.png">
+    <img alt="JSON Parameter: Remote HTTP Source" src="docs/images/remote-light.png">
+</picture>
+
 
 ---
 
@@ -29,9 +51,10 @@ You can extract values using **JSONPath** syntax, making it easy to map dynamic 
 ### 1. Install the plugin
 
 Install via Jenkins Plugin Manager:  
-**Manage Jenkins » Manage Jenkins » Available plugins » JSON Parameter**
+**Manage Jenkins » Plugins » Available plugins » JSON Parameter**
 
 Requires:
+
 - [Config File Provider Plugin](https://plugins.jenkins.io/config-file-provider/)
 
 ### 2. Add a JSON Parameter
@@ -50,12 +73,14 @@ When configuring a job:
 ### 3. Select a JSON Source
 
 #### 🔹 Config File
+
 - Provide the **Config File ID**
 - Jenkins resolves it hierarchically:
     - Looks in the current folder and its parents
     - Falls back to global if not found
 
 #### 🔹 Remote HTTP Endpoint
+
 - Enter a full API URL that returns JSON
 - Select a **Credentials ID** if authentication is required:
     - Username/Password → Basic Auth (or Bearer if username is empty)
@@ -69,64 +94,152 @@ When configuring a job:
 
 ```json
 [
-  { "name": "Alpha" },
-  { "name": "Beta" }
+  {
+    "name": "Alpha"
+  },
+  {
+    "name": "Beta"
+  }
 ]
 ```
 
 **🔧 Example 1: Folder-level config with placeholder**
+
 ```groovy
 parameters {
-  jsonParam(
-          name: 'JSON_PARAM', 
-          description: 'List data from JSON source.', 
-          defaultValue: '', 
-          query: '$[*].name', 
-          source: configFileSource(configId: 'my-id')
-  )
+    jsonParam(
+            name: 'JSON_PARAM',
+            description: 'List data from JSON source.',
+            defaultValue: '',
+            query: '$[*].name',
+            source: configFileSource(configId: 'my-id')
+    )
 }
 ```
+
 ➡️ Rendered dropdown:
-```groovy
+
+```json
 ["-- Choose an option --", "Alpha", "Beta"]
 ```
 
 ---
 
 **🔧 Example 2: Global config with preselected default**
+
 ```groovy
 parameters {
-  jsonParam(
-          name: 'JSON_PARAM', 
-          description: 'List data from JSON source.', 
-          defaultValue: 'Alpha', 
-          query: '$[*].name', 
-          source: configFileSource(configId: 'my-id')
-  )
+    jsonParam(
+            name: 'JSON_PARAM',
+            description: 'List data from JSON source.',
+            defaultValue: 'Alpha',
+            query: '$[*].name',
+            source: configFileSource(configId: 'my-id')
+    )
 }
 ```
+
 ➡️ Rendered dropdown:
-```groovy
+
+```json
 ["Alpha", "Beta"]
 ```
 
 ---
 
 **🔧 Example 3: HTTP JSON source**
+
 ```groovy
 parameters {
-  jsonParam(
-          name: 'JSON_PARAM', 
-          description: 'List data from JSON source.', 
-          defaultValue: 'Beta', 
-          query: '$[*].name',
-          source: remoteSource(credentialsId: 'my-id', url: 'https://dummyjson.com/api/data')
-  )
+    jsonParam(
+            name: 'JSON_PARAM',
+            description: 'List data from JSON source.',
+            defaultValue: 'Beta',
+            query: '$[*].name',
+            source: remoteSource(credentialsId: 'my-id', url: 'http://localhost:8080/api/data')
+    )
 }
 ```
+
 ➡️ Rendered dropdown:
-```groovy
+
+```json
 ["Beta", "Alpha"]
+```
+
+---
+
+### 🔮 Advanced JSONPath Queries
+
+```json
+{
+  "files": [
+    {
+      "type": "json",
+      "value": "file1.json"
+    },
+    {
+      "type": "yaml",
+      "value": "file2.yaml"
+    },
+    {
+      "type": "properties",
+      "value": "file3.properties"
+    },
+    {
+      "type": "yaml",
+      "value": "file4.yml"
+    },
+    {
+      "type": "json",
+      "value": "file5.json"
+    }
+  ]
+}
+```
+
+---
+
+**🔧 Query 1: Get JSON files**
+```groovy
+'$.files[?(@.type == "json")].value'
+```
+➡️ Rendered dropdown:
+```json
+["-- Choose an option --", "file1.json", "file5.json"]
+```
+
+---
+
+**🔧 Query 2: Get files and exclude Properties files**
+```groovy
+'$.files[?(@.type != "properties")].value'
+```
+➡️ Rendered dropdown:
+```json
+["-- Choose an option --", "file1.json", "file2.yaml", "file4.yml", "file5.json"]
+```
+
+---
+
+**🔧 Query 3: Get YAML files by Regex**
+```groovy
+'$.files[?(@.value =~ /.*\\.ya?ml$/)].value'
+```
+➡️ Rendered dropdown:
+```json
+["-- Choose an option --", "file2.yaml", "file4.yml"]
+```
+
+---
+
+**🔧 Query 4: Get YAML and Properties files combined**
+```groovy
+'$.files[?(@.value =~ /.*\\.ya?ml$/ || @.type == "properties")].value'
+```
+➡️ Rendered dropdown:
+```json
+["-- Choose an option --", "file2.yaml", "file3.properties", "file4.yml"]
 ```
 
 ---
@@ -141,5 +254,5 @@ Refer to our [contribution guidelines](https://github.com/jenkinsci/.github/blob
 
 ## LICENSE
 
-Licensed under MIT, see [LICENSE](LICENSE.md)
+Licensed under the MIT [LICENSE](LICENSE.md)
 
