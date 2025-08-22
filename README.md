@@ -188,7 +188,7 @@ parameters {
     },
     {
       "type": "yaml",
-      "value": "file4.yaml"
+      "value": "file4.yml"
     },
     {
       "type": "json",
@@ -217,7 +217,7 @@ parameters {
 ```
 ➡️ Rendered dropdown:
 ```json
-["-- Choose an option --", "file1.json", "file2.yaml", "file4.yaml", "file5.json"]
+["-- Choose an option --", "file1.json", "file2.yaml", "file4.yml", "file5.json"]
 ```
 
 ---
@@ -228,7 +228,7 @@ parameters {
 ```
 ➡️ Rendered dropdown:
 ```json
-["-- Choose an option --", "file2.yaml", "file4.yaml"]
+["-- Choose an option --", "file2.yaml", "file4.yml"]
 ```
 
 ---
@@ -239,7 +239,7 @@ parameters {
 ```
 ➡️ Rendered dropdown:
 ```json
-["-- Choose an option --", "file2.yaml", "file3.properties", "file4.yaml"]
+["-- Choose an option --", "file2.yaml", "file3.properties", "file4.yml"]
 ```
 
 ---
