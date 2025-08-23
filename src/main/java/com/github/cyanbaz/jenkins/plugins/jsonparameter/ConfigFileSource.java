@@ -38,7 +38,7 @@ public class ConfigFileSource extends JsonSource {
      * @param configId     the ID of the config file as defined in the Config File Provider plugin
      */
     @DataBoundConstructor
-    public ConfigFileSource(String configId) {
+    public ConfigFileSource(@NonNull String configId) {
         this.configId = configId;
     }
 
@@ -112,7 +112,6 @@ public class ConfigFileSource extends JsonSource {
                     }
                 }
             }
-
             return items;
         }
 

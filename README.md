@@ -31,16 +31,16 @@ See [Advanced JSONPath Examples](#-advanced-jsonpath-queries).
 
 ### Config File Source
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/config-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/config-light.png">
-    <img alt="JSON Parameter: Config File Source" src="docs/images/config-light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/jenkinsci/json-parameter-plugin/main/docs/images/config-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/jenkinsci/json-parameter-plugin/main/docs/images/config-light.png">
+    <img alt="JSON Parameter: Config File Source" src="https://raw.githubusercontent.com/jenkinsci/json-parameter-plugin/main/docs/images/config-light.png">
 </picture>
 
 ### Remote HTTP Source
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/remote-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/remote-light.png">
-    <img alt="JSON Parameter: Remote HTTP Source" src="docs/images/remote-light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/jenkinsci/json-parameter-plugin/main/docs/images/remote-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/jenkinsci/json-parameter-plugin/main/docs/images/remote-light.png">
+    <img alt="JSON Parameter: Remote HTTP Source" src="https://raw.githubusercontent.com/jenkinsci/json-parameter-plugin/main/docs/images/remote-light.png">
 </picture>
 
 
@@ -83,7 +83,7 @@ When configuring a job:
 
 - Enter a full API URL that returns JSON
 - Select a **Credentials ID** if authentication is required:
-    - Username/Password → Basic Auth (or Bearer if username is empty)
+    - Username/Password → Basic Auth
     - Secret Text → Bearer token
 
 ---
@@ -233,7 +233,17 @@ parameters {
 
 ---
 
-**🔧 Query 4: Get YAML and Properties files combined**
+**🔧 Query 4: Get YAML files using the contains operator**
+```groovy
+'$.files[?(@.value contains "yaml")].value'
+```
+➡️ Rendered dropdown:
+```json
+["-- Choose an option --", "file2.yaml"]
+```
+
+---
+**🔧 Query 5: Get YAML and Properties files combined**
 ```groovy
 '$.files[?(@.value =~ /.*\\.ya?ml$/ || @.type == "properties")].value'
 ```
