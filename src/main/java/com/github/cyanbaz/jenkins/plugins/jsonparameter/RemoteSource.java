@@ -27,6 +27,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -43,7 +44,7 @@ import org.kohsuke.stapler.verb.POST;
  * Authentication is optional:
  * - If no credentials are provided, a plain HTTP(S) request is sent.
  * - If a credentials ID is provided, the plugin supports:
- *   - {@link StandardUsernamePasswordCredentials}: Sent as HTTP Basic Auth or Bearer if username is empty.
+ *   - {@link StandardUsernamePasswordCredentials}: Sent as HTTP Basic Auth.
  *   - {@link StringCredentials}: Sent as Bearer token in the Authorization header.
  * <p>
  * The configured URL must return a valid JSON response body. This source type is ideal for
@@ -63,7 +64,7 @@ public class RemoteSource extends JsonSource {
      * @param credentialsId optional credentials ID for authentication (username/password)
      */
     @DataBoundConstructor
-    public RemoteSource(String url, String credentialsId) {
+    public RemoteSource(@NonNull String url, String credentialsId) {
         this.url = url;
         this.credentialsId = credentialsId;
     }
@@ -93,6 +94,7 @@ public class RemoteSource extends JsonSource {
     public String loadJson() throws IOException, InterruptedException {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(30))
                 .header("Accept", "application/json")
                 .GET();
 
@@ -134,27 +136,26 @@ public class RemoteSource extends JsonSource {
      * <p>
      * Supported:
      * - {@link StandardUsernamePasswordCredentials}: Returns "Basic base64(username:password)"
-     *   or "Bearer password" if username is empty.
      * - {@link StringCredentials}: Returns "Bearer <token>"
      *
      * @param credentials the credentials object to encode
      * @return the full Authorization header value
-     * @throws IllegalArgumentException if the credentials type is unsupported
+     * @throws IllegalArgumentException if the credentials type is unsupported or username is empty
      */
     private String buildAuthorizationHeader(Credentials credentials) {
         if (credentials instanceof StandardUsernamePasswordCredentials userPass) {
             String user = userPass.getUsername();
             String pass = userPass.getPassword().getPlainText();
-            return !user.isEmpty()
-                    ? "Basic "
-                            + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes(StandardCharsets.UTF_8))
-                    : "Bearer " + pass;
+            if (user.isBlank()) {
+                throw new IllegalArgumentException(Messages.error_empty_username());
+            }
+            return "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes(StandardCharsets.UTF_8));
         } else if (credentials instanceof StringCredentials token) {
             String secret = token.getSecret().getPlainText();
             return "Bearer " + secret;
         } else {
-            throw new IllegalArgumentException(
-                    "Unsupported credentials type: " + credentials.getClass().getName());
+            throw new IllegalArgumentException(Messages.error_unsupported_credential_type(
+                    credentials.getClass().getName()));
         }
     }
 
@@ -164,9 +165,7 @@ public class RemoteSource extends JsonSource {
 
         int status = response.statusCode();
         if (status >= 400) {
-            throw new IOException("Failed to fetch JSON from URL '" + url + "' using credentials '"
-                    + credentialsId + "': HTTP "
-                    + status + " - " + response.body());
+            throw new IOException(Messages.error_http_request_failed(url, credentialsId, status, response.body()));
         }
         return response.body();
     }
