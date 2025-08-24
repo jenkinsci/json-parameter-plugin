@@ -56,6 +56,16 @@ public abstract class JsonSource extends AbstractDescribableImpl<JsonSource> imp
      */
     public JsonResult<ListBoxModel> loadOptions(String query) {
         ListBoxModel model = new ListBoxModel();
+        return getListBoxModelJsonResult(query, model);
+    }
+
+    public JsonResult<ListBoxModel> loadOptions(String query, String refName, String refValue) {
+        ListBoxModel model = new ListBoxModel();
+        query = query.replace("${" + refName + "}", refValue);
+        return getListBoxModelJsonResult(query, model);
+    }
+
+    private JsonResult<ListBoxModel> getListBoxModelJsonResult(String query, ListBoxModel model) {
         try {
             String json = loadJson();
             List<String> values = JsonPath.read(json, query);
