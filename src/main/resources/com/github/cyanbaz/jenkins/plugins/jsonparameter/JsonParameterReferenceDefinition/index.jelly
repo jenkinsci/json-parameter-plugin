@@ -32,11 +32,9 @@ Licensed under the MIT License (see LICENSE file).
             const query   = '${it.query}';
             let refSelect = null;
             let mySelect = null;
-            //var mySelect  = document.querySelector('select[name="value.${it.name}"]');
 
             const labels = [...document.querySelectorAll('.jenkins-form-label')];
-            const cascadingLabel = labels.find(label => label.textContent.trim() === 'CASCADING');
-            const refLabel = labels.find(label => label.textContent.trim() === 'REF');
+            const cascadingLabel = labels.find(label => label.textContent.trim() === myName);
 
             const refInput = document.querySelector('input[name="name"]');
             if (refInput &amp;&amp; refInput.value === refName) {
@@ -58,16 +56,13 @@ Licensed under the MIT License (see LICENSE file).
                 fetch(url, { credentials: "same-origin" })
                         .then(function(r){ return r.json(); })
                         .then(resp => {
-                            // 1) Array extrahieren (unterstützt resp = [], resp.data = [], resp.value.options = [])
                             let items = Array.isArray(resp) ? resp
                                     : Array.isArray(resp?.data) ? resp.data
                                             : Array.isArray(resp?.value?.options) ? resp.value.options
                                                     : [];
 
-                            // 2) Strings in Objekte mappen (falls Quelle mal nur ["a","b"] liefert)
                             items = items.map(x => (typeof x === "string" ? { name: x, value: x, selected: false } : x));
 
-                            // 3) Select befüllen
                             const prev = mySelect.value;
                             mySelect.innerHTML = "";
                             const seen = new Set();
@@ -87,7 +82,6 @@ Licensed under the MIT License (see LICENSE file).
                                 mySelect.selectedIndex = 0;
                             }
 
-                            // Optional: nächste Kaskadenstufe anstoßen
                             mySelect.dispatchEvent(new Event("change", { bubbles: true }));
                         })
                         .catch(console.error);

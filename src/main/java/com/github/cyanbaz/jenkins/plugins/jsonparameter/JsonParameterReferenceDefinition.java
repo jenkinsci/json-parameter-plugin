@@ -7,7 +7,6 @@ package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 import com.jayway.jsonpath.JsonPath;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
-import hudson.cli.CLICommand;
 import hudson.model.*;
 import hudson.util.HttpResponses;
 import hudson.util.ListBoxModel;
@@ -18,12 +17,9 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.kohsuke.stapler.*;
-import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.GET;
-import org.kohsuke.stapler.verb.POST;
 
 import java.io.Serial;
-import java.util.Collections;
 import java.util.List;
 
 /**
