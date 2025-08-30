@@ -20,7 +20,7 @@ import org.kohsuke.stapler.StaplerRequest2;
  * UI that consumes those options). This class itself does <b>not</b> perform JSON
  * evaluation; it only stores configuration and handles value binding for web and CLI.</p>
  *
- * <h3>Responsibilities</h3>
+ * <p><b>Responsibilities</b></p>
  * <ul>
  *   <li>Holds the configured {@code defaultValue}, {@link JsonSource}, and JSONPath {@code query}.</li>
  *   <li>Creates {@link StringParameterValue}s from Web UI submissions and CLI invocations.</li>

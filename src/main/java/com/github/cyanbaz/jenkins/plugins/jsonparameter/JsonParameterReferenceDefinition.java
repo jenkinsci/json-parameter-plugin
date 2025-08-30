@@ -26,7 +26,7 @@ import org.kohsuke.stapler.verb.POST;
  * may contain a placeholder in the form <code>${REF}</code>. The placeholder is dynamically
  * substituted with the current value of the referenced parameter (as configured in {@link #getRef()}).
  *
- * <h3>Example</h3>
+ * <p><b>Example</b></p>
  * <pre>{@code
  * Query: $[?(@.user == "${USERS}")].email
  * Ref:   USERS
