@@ -27,7 +27,7 @@ import org.kohsuke.stapler.StaplerRequest2;
  *   <li>Exposes a localized placeholder message for empty option lists.</li>
  * </ul>
  *
- * <h3>Value binding</h3>
+ * <p><b>Value binding</b></p>
  * <ul>
  *   <li><b>Web UI (form submit):</b> expects a single form field named {@code value}.
  *       If empty/missing, {@code defaultValue} is used.</li>
