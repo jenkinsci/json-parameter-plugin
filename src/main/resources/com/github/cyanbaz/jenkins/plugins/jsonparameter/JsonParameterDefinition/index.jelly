@@ -4,10 +4,9 @@ Licensed under the MIT License (see LICENSE file).
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <j:set var="descriptor" value="${it.descriptor}"/>
     <j:set var="source" value="${it.source}"/>
     <j:set var="query" value="${it.query}"/>
-    <j:set var="result" value="${it.source.loadOptions(it.query)}"/>
+    <j:set var="result" value="${source.loadOptions(query)}"/>
     <f:entry title="${it.name}" description="${it.description}">
         <j:choose>
             <j:when test="${not result.success}">
