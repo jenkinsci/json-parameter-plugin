@@ -28,8 +28,8 @@ Licensed under the MIT License (see LICENSE file).
     <script>
         (function () {
             const refName = '${it.ref}';
-            const myName  = '${it.name}';
-            const query   = '${it.query}';
+            const myName = '${it.name}';
+            const query = '${it.query}';
             let refSelect = null;
             let mySelect = null;
 
@@ -45,46 +45,53 @@ Licensed under the MIT License (see LICENSE file).
                 const settingMain = cascadingLabel.nextElementSibling;
                 mySelect = settingMain.querySelector('select');
             }
-            console.log(mySelect)
+
             if (!refSelect || !mySelect) return;
 
-            function refresh() {
-                var url = "${rootURL}/descriptorByName/${it.descriptor.clazz.name}/loadOptions"
-                        + "?refName="  + encodeURIComponent(refName)
-                        + "&amp;refValue=" + encodeURIComponent(refSelect.value || '')
-                        + "&amp;query="    + encodeURIComponent(query || '');
-                fetch(url, { credentials: "same-origin" })
-                        .then(function(r){ return r.json(); })
-                        .then(resp => {
-                            let items = Array.isArray(resp) ? resp
-                                    : Array.isArray(resp?.data) ? resp.data
-                                            : Array.isArray(resp?.value?.options) ? resp.value.options
-                                                    : [];
+            const refresh = async () => {
+                const url = "descriptorByName/${it.descriptor.clazz.name}/loadOptions"
 
-                            items = items.map(x => (typeof x === "string" ? { name: x, value: x, selected: false } : x));
+                const params = new URLSearchParams();
+                params.set("query", query || "");
+                params.set("refName", "${it.ref}" || "");
+                params.set("refValue", refSelect.value || "");
+                params.set("configId", "${it.source.getConfigId()}" || "");
 
-                            const prev = mySelect.value;
-                            mySelect.innerHTML = "";
-                            const seen = new Set();
+                const headers = {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "${crumbField}": "${crumbValue}"
+                };
 
-                            items.forEach(item => {
-                                const v = item.value ?? item.name;
-                                if (v == null || seen.has(v)) return;
-                                seen.add(v);
-                                const opt = document.createElement("option");
-                                opt.value = v;
-                                opt.textContent = item.name ?? String(v);
-                                if (item.selected) opt.selected = true;
-                                mySelect.appendChild(opt);
-                            });
+                const response = await fetch(url, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers,
+                    body: params.toString()
+                })
 
-                            if (!mySelect.value &amp;&amp; mySelect.options.length) {
-                                mySelect.selectedIndex = 0;
-                            }
+                const list = await response.json();
+                const data = list.data
 
-                            mySelect.dispatchEvent(new Event("change", { bubbles: true }));
-                        })
-                        .catch(console.error);
+                    const prev = mySelect.value;
+                    mySelect.innerHTML = "";
+                    const seen = new Set();
+
+                data.forEach(item => {
+                        const v = item.value ?? item.name;
+                        if (v == null || seen.has(v)) return;
+                        seen.add(v);
+                        const opt = document.createElement("option");
+                        opt.value = v;
+                        opt.textContent = item.name ?? String(v);
+                        if (item.selected) opt.selected = true;
+                        mySelect.appendChild(opt);
+                    });
+
+                    if (!mySelect.value &amp;&amp; mySelect.options.length) {
+                        mySelect.selectedIndex = 0;
+                    }
+
+                    mySelect.dispatchEvent(new Event("change", { bubbles: true }));
             }
 
             refresh();

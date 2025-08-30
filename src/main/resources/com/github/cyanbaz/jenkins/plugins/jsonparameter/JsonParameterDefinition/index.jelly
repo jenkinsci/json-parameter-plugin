@@ -16,7 +16,7 @@ Licensed under the MIT License (see LICENSE file).
             <j:otherwise>
                 <div name="parameter" description="${it.description}" class="jenkins-select">
                     <input type="hidden" name="name" value="${it.name}"/>
-                    <select name="value" class="jenkins-select__input">
+                    <select name="value" class="jenkins-select__input" id="json-parameter-${it.name}">
                         <j:if test="${empty it.defaultValue}">
                             <option value="" selected="selected" disabled="disabled">
                                 ${it.getPlaceholderMessage()}

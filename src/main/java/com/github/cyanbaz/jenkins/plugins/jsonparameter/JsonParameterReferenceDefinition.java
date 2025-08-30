@@ -17,10 +17,11 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.kohsuke.stapler.*;
-import org.kohsuke.stapler.verb.GET;
+import org.kohsuke.stapler.verb.POST;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a custom Jenkins parameter definition that extracts values from a JSON source
@@ -64,6 +65,8 @@ public class JsonParameterReferenceDefinition extends JsonParameterDefinition {
     @Symbol({"jsonParamRef"})
     public static class DescriptorImpl extends ParameterDescriptor {
 
+        Logger logger = Logger.getLogger(ParameterDescriptor.class.getName());
+
         /**
          * Returns the display name shown in the Jenkins UI.
          *
@@ -75,15 +78,17 @@ public class JsonParameterReferenceDefinition extends JsonParameterDefinition {
             return "JSON Reference Parameter";
         }
 
-        @GET
+        @POST
         public HttpResponse doLoadOptions(
+                @AncestorInPath Item item,
                 @QueryParameter String query,
                 @QueryParameter String refName,
-                @QueryParameter String refValue
+                @QueryParameter String refValue,
+                @QueryParameter String configId
         ) {
+            logger.info("doLoadOptions called with query: " + query + ", refName: " + refName + ", refValue: " + refValue + ", configId: " + configId);
             Jenkins.get().checkPermission(Jenkins.READ);
-            Item item = Jenkins.get().getItemByFullName("ref-param");
-            JsonResult<ListBoxModel> items = loadOptions(item, query, refName, refValue);
+            JsonResult<ListBoxModel> items = loadOptions(item, query, refName, refValue, configId);
             JSONArray jsonArray = new JSONArray();
             if (items.isSuccess()) {
                 ListBoxModel model = items.getValue();
@@ -102,15 +107,15 @@ public class JsonParameterReferenceDefinition extends JsonParameterDefinition {
             return HttpResponses.okJSON(jsonArray);
         }
 
-        public JsonResult<ListBoxModel> loadOptions(Item item, String query, String refName, String refValue) {
+        public JsonResult<ListBoxModel> loadOptions(Item item, String query, String refName, String refValue, String configId) {
             ListBoxModel model = new ListBoxModel();
             query = query.replace("${" + refName + "}", refValue);
-            return getListBoxModelJsonResult(item, query, model);
+            return getListBoxModelJsonResult(item, query, model, configId);
         }
 
-        private JsonResult<ListBoxModel> getListBoxModelJsonResult(Item item, String query, ListBoxModel model) {
+        private JsonResult<ListBoxModel> getListBoxModelJsonResult(Item item, String query, ListBoxModel model, String configId) {
             try {
-                String json = loadJson(item);
+                String json = loadJson(item, configId);
                 List<String> values = JsonPath.read(json, query);
                 if (values.isEmpty()) {
                     return JsonResult.failure(Messages.error_no_data());
@@ -124,11 +129,13 @@ public class JsonParameterReferenceDefinition extends JsonParameterDefinition {
             return JsonResult.success(model);
         }
 
-        public String loadJson(Item item) {
+        public String loadJson(Item item, String configId) {
             if (item != null) {
-                Config cfg = ConfigFiles.getByIdOrNull(item, "files-example");
+                JsonParameterReferenceDefinition definition =
+                        Stapler.getCurrentRequest2().findAncestorObject(JsonParameterReferenceDefinition.class);
+                Config cfg = ConfigFiles.getByIdOrNull(item, configId);
                 if (cfg == null) {
-                    throw new IllegalArgumentException(Messages.error_config_id_not_found("files-example"));
+                    throw new IllegalArgumentException(Messages.error_config_id_not_found(configId));
                 }
                 return cfg.content;
             }

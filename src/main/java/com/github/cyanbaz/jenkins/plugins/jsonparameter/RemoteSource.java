@@ -77,6 +77,11 @@ public class RemoteSource extends JsonSource {
         return credentialsId;
     }
 
+    @Override
+    public String getConfigId() {
+        return "";
+    }
+
     /**
      * Fetches the JSON content from the configured remote URL using Java's {@link HttpClient}.
      * <p>
