@@ -7,17 +7,7 @@ package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 import com.jayway.jsonpath.JsonPath;
 import hudson.ExtensionPoint;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.Item;
-import hudson.util.HttpResponses;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.plugins.configfiles.ConfigFiles;
-import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.QueryParameter;
-
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
@@ -45,8 +35,6 @@ public abstract class JsonSource extends AbstractDescribableImpl<JsonSource> imp
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public abstract String getConfigId();
-
     /**
      * Loads the raw JSON string from the configured data source.
      *
@@ -68,10 +56,6 @@ public abstract class JsonSource extends AbstractDescribableImpl<JsonSource> imp
      */
     public JsonResult<ListBoxModel> loadOptions(String query) {
         ListBoxModel model = new ListBoxModel();
-        return getListBoxModelJsonResult(query, model);
-    }
-
-    private JsonResult<ListBoxModel> getListBoxModelJsonResult(String query, ListBoxModel model) {
         try {
             String json = loadJson();
             List<String> values = JsonPath.read(json, query);

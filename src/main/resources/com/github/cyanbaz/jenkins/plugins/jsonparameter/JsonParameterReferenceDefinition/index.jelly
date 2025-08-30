@@ -3,20 +3,15 @@ Copyright (c) 2025 Caner Yanbaz
 Licensed under the MIT License (see LICENSE file).
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
-    <st:bind var="loadUrl" value="${it.descriptor}/loadOptions"/>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <j:set var="crumbField" value="${app.crumbIssuer.crumbRequestField}"/>
     <j:set var="crumbValue" value="${app.crumbIssuer.crumb}"/>
+    <j:set var="selectId" value="${h.generateId()}"/>
     <f:entry title="${it.name}" description="${it.description}">
         <j:choose>
             <div name="parameter" description="${it.description}" class="jenkins-select">
                 <input type="hidden" name="name" value="${it.name}"/>
-                <select name="value" class="jenkins-select__input">
-                    <j:if test="${empty it.defaultValue}">
-                        <option value="" selected="selected" disabled="disabled">
-                            ${it.getPlaceholderMessage()}
-                        </option>
-                    </j:if>
+                <select name="value" class="jenkins-select__input" id="${selectId}">
                     <j:forEach var="json" items="${result.value}">
                         <f:option value="${json.value}" selected="${it.defaultValue eq json.value}">${json.name}
                         </f:option>
@@ -26,40 +21,33 @@ Licensed under the MIT License (see LICENSE file).
         </j:choose>
     </f:entry>
     <script>
-        (function () {
+        (async function () {
             const refName = '${it.ref}';
-            const myName = '${it.name}';
-            const query = '${it.query}';
-            let refSelect = null;
-            let mySelect = null;
+            const paramName = '${it.name}';
+            const crumbValue = '${crumbValue}';
+            const paramSelect = document.getElementById("${selectId}");
 
-            const labels = [...document.querySelectorAll('.jenkins-form-label')];
-            const cascadingLabel = labels.find(label => label.textContent.trim() === myName);
+            const parameters = document.getElementsByName("parameter");
+            let refValue = null;
+            parameters.forEach(parameter => {
+                const nameInput = parameter.querySelector('input[name="name"]');
+                if (nameInput &amp;&amp; nameInput.value === refName) {
+                    refValue = parameter.querySelector('[name="value"]');
+                }
+            });
 
-            const refInput = document.querySelector('input[name="name"]');
-            if (refInput &amp;&amp; refInput.value === refName) {
-                refSelect = document.querySelector('select[name="value"]');
-            }
-
-            if (cascadingLabel) {
-                const settingMain = cascadingLabel.nextElementSibling;
-                mySelect = settingMain.querySelector('select');
-            }
-
-            if (!refSelect || !mySelect) return;
+            if (!refValue || !paramSelect) return;
 
             const refresh = async () => {
                 const url = "descriptorByName/${it.descriptor.clazz.name}/loadOptions"
 
                 const params = new URLSearchParams();
-                params.set("query", query || "");
-                params.set("refName", "${it.ref}" || "");
-                params.set("refValue", refSelect.value || "");
-                params.set("configId", "${it.source.getConfigId()}" || "");
+                params.set("paramName", paramName || "");
+                params.set("refValue", refValue.value || "");
 
                 const headers = {
                     "Content-Type": "application/x-www-form-urlencoded",
-                    "${crumbField}": "${crumbValue}"
+                    "${crumbField}": crumbValue
                 };
 
                 const response = await fetch(url, {
@@ -69,33 +57,42 @@ Licensed under the MIT License (see LICENSE file).
                     body: params.toString()
                 })
 
-                const list = await response.json();
-                const data = list.data
+                const json = await response.json();
+                const items = json.data
 
-                    const prev = mySelect.value;
-                    mySelect.innerHTML = "";
-                    const seen = new Set();
+                paramSelect.innerHTML = "";
 
-                data.forEach(item => {
-                        const v = item.value ?? item.name;
-                        if (v == null || seen.has(v)) return;
-                        seen.add(v);
-                        const opt = document.createElement("option");
-                        opt.value = v;
-                        opt.textContent = item.name ?? String(v);
-                        if (item.selected) opt.selected = true;
-                        mySelect.appendChild(opt);
-                    });
+                (items || []).forEach(item => {
+                    const value = item.value;
+                    if (value == null) return;
+                    const opt = document.createElement("option");
+                    opt.value = value;
+                    opt.textContent = item.name ?? String(value);
+                    if (item.selected) opt.selected = true;
+                    paramSelect.appendChild(opt);
+                });
 
-                    if (!mySelect.value &amp;&amp; mySelect.options.length) {
-                        mySelect.selectedIndex = 0;
-                    }
+                if (!paramSelect.value &amp;&amp; paramSelect.options.length) {
+                    paramSelect.selectedIndex = 0;
+                }
 
-                    mySelect.dispatchEvent(new Event("change", { bubbles: true }));
+                paramSelect.dispatchEvent(new Event("change", {bubbles: true}));
             }
 
-            refresh();
-            refSelect.addEventListener('change', refresh);
+            function debounce(fn, delay) {
+                let timer = null;
+                return function(...args) {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => fn.apply(this, args), delay);
+                };
+            }
+
+            await refresh();
+            if (refValue.tagName === "SELECT") {
+                refValue.addEventListener("change", refresh);
+            } else if (refValue.tagName === "INPUT" || refValue.tagName === "TEXTAREA") {
+                refValue.addEventListener("input", debounce(refresh, 300));
+            }
         })();
     </script>
 </j:jelly>

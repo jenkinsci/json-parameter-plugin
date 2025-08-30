@@ -19,7 +19,7 @@ Licensed under the MIT License (see LICENSE file).
 
     <f:dropdownDescriptorSelector title="${%parameter.source.selector.label}" field="source"/>
 
-    <f:entry title="${%parameter.query.label}" field="query">
+    <f:entry title="${%parameter.query.label}" field="query" description="${%parameter.query.description}">
         <f:textbox/>
     </f:entry>
 

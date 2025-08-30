@@ -169,6 +169,50 @@ parameters {
 
 ---
 
+**🔧 Example 4: Reference another parameter**
+
+Sometimes you want the available options to depend on the value of another parameter.  
+Use `jsonParamRef` with a JSONPath query containing a placeholder like `${OTHER_PARAM}`.
+
+**📦 Sample JSON**
+
+```json
+[
+  { "name": "Alice", "email": "alice@example.com" },
+  { "name": "Bob",   "email": "bob@example.com" }
+]
+```
+
+```groovy
+parameters {
+    jsonParam(
+            name: 'USERS',
+            description: 'List of available users',
+            defaultValue: 'Alice',
+            query: '$[*].name',
+            source: configFileSource(configId: 'users-json')
+    )
+
+    jsonParamRef(
+            name: 'EMAILS',
+            description: 'Email addresses filtered by selected user',
+            defaultValue: '',
+            query: '$[?(@.name == "${USERS}")].email',
+            ref: 'USERS',
+            source: configFileSource(configId: 'users-json')
+    )
+}
+```
+
+➡️ Rendered dropdown:
+
+depends on the selected user, e.g.
+```json
+["alice@example.com"]
+```
+
+---
+
 ### 🔮 Advanced JSONPath Queries
 
 ```json
