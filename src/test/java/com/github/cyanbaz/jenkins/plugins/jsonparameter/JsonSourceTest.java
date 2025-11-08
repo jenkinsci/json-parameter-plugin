@@ -14,8 +14,7 @@ class JsonSourceTest {
     @Test
     void given_valid_json_when_loadOptions_return_success() {
         // given
-        String json =
-                """
+        String json = """
                 [
                   {"name": "Alice", "age": 30},
                   {"name": "Bob", "age": 25}
