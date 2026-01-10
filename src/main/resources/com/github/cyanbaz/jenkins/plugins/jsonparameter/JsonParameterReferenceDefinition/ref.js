@@ -4,8 +4,8 @@
         const paramName = select.dataset.jpParam || "";
         const url = select.dataset.jpUrl || "";
 
-        const crumbField = select.dataset.jpCrumbField || "";
-        const crumbValue = select.dataset.jpCrumbValue || "";
+        const crumbField = document.head.getAttribute("data-crumb-header") || "";
+        const crumbValue = document.head.getAttribute("data-crumb-value") || "";
 
         const parameters = document.getElementsByName("parameter");
         let refValue = null;

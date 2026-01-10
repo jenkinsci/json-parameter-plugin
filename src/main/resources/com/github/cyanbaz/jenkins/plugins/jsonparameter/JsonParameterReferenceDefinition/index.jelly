@@ -4,8 +4,6 @@ Licensed under the MIT License (see LICENSE file).
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"  xmlns:f="/lib/form">
-    <j:set var="crumbField" value="${app.crumbIssuer.crumbRequestField}"/>
-    <j:set var="crumbValue" value="${app.crumbIssuer.crumb}"/>
     <j:set var="selectId" value="${h.generateId()}"/>
     <f:entry title="${it.name}" description="${it.description}">
         <j:choose>
@@ -16,9 +14,7 @@ Licensed under the MIT License (see LICENSE file).
                         id="${selectId}"
                         data-jp-ref="${it.ref}"
                         data-jp-param="${it.name}"
-                        data-jp-url="descriptorByName/${it.descriptor.clazz.name}/loadOptions"
-                        data-jp-crumb-field="${crumbField}"
-                        data-jp-crumb-value="${crumbValue}">
+                        data-jp-url="descriptorByName/${it.descriptor.clazz.name}/loadOptions">
                     <j:forEach var="json" items="${result.value}">
                         <f:option value="${json.value}" selected="${it.defaultValue eq json.value}">${json.name}
                         </f:option>
