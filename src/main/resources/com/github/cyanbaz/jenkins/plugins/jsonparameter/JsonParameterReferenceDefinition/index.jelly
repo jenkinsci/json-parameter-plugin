@@ -3,7 +3,7 @@ Copyright (c) 2025 Caner Yanbaz
 Licensed under the MIT License (see LICENSE file).
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"  xmlns:f="/lib/form">
     <j:set var="crumbField" value="${app.crumbIssuer.crumbRequestField}"/>
     <j:set var="crumbValue" value="${app.crumbIssuer.crumb}"/>
     <j:set var="selectId" value="${h.generateId()}"/>
@@ -11,7 +11,14 @@ Licensed under the MIT License (see LICENSE file).
         <j:choose>
             <div name="parameter" description="${it.description}" class="jenkins-select">
                 <input type="hidden" name="name" value="${it.name}"/>
-                <select name="value" class="jenkins-select__input" id="${selectId}">
+                <select name="value"
+                        class="jenkins-select__input"
+                        id="${selectId}"
+                        data-jp-ref="${it.ref}"
+                        data-jp-param="${it.name}"
+                        data-jp-url="descriptorByName/${it.descriptor.clazz.name}/loadOptions"
+                        data-jp-crumb-field="${crumbField}"
+                        data-jp-crumb-value="${crumbValue}">
                     <j:forEach var="json" items="${result.value}">
                         <f:option value="${json.value}" selected="${it.defaultValue eq json.value}">${json.name}
                         </f:option>
@@ -20,79 +27,5 @@ Licensed under the MIT License (see LICENSE file).
             </div>
         </j:choose>
     </f:entry>
-    <script>
-        (async function () {
-            const refName = '${it.ref}';
-            const paramName = '${it.name}';
-            const crumbValue = '${crumbValue}';
-            const paramSelect = document.getElementById("${selectId}");
-
-            const parameters = document.getElementsByName("parameter");
-            let refValue = null;
-            parameters.forEach(parameter => {
-                const nameInput = parameter.querySelector('input[name="name"]');
-                if (nameInput &amp;&amp; nameInput.value === refName) {
-                    refValue = parameter.querySelector('[name="value"]');
-                }
-            });
-
-            if (!refValue || !paramSelect) return;
-
-            const refresh = async () => {
-                const url = "descriptorByName/${it.descriptor.clazz.name}/loadOptions"
-
-                const params = new URLSearchParams();
-                params.set("paramName", paramName || "");
-                params.set("refValue", refValue.value || "");
-
-                const headers = {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "${crumbField}": crumbValue
-                };
-
-                const response = await fetch(url, {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers,
-                    body: params.toString()
-                })
-
-                const json = await response.json();
-                const items = json.data
-
-                paramSelect.innerHTML = "";
-
-                (items || []).forEach(item => {
-                    const value = item.value;
-                    if (value == null) return;
-                    const opt = document.createElement("option");
-                    opt.value = value;
-                    opt.textContent = item.name ?? String(value);
-                    if (item.selected) opt.selected = true;
-                    paramSelect.appendChild(opt);
-                });
-
-                if (!paramSelect.value &amp;&amp; paramSelect.options.length) {
-                    paramSelect.selectedIndex = 0;
-                }
-
-                paramSelect.dispatchEvent(new Event("change", {bubbles: true}));
-            }
-
-            function debounce(fn, delay) {
-                let timer = null;
-                return function(...args) {
-                    clearTimeout(timer);
-                    timer = setTimeout(() => fn.apply(this, args), delay);
-                };
-            }
-
-            await refresh();
-            if (refValue.tagName === "SELECT") {
-                refValue.addEventListener("change", refresh);
-            } else if (refValue.tagName === "INPUT" || refValue.tagName === "TEXTAREA") {
-                refValue.addEventListener("input", debounce(refresh, 300));
-            }
-        })();
-    </script>
+    <st:adjunct includes="com.github.cyanbaz.jenkins.plugins.jsonparameter.JsonParameterReferenceDefinition.ref" />
 </j:jelly>
