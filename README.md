@@ -4,7 +4,6 @@ A Jenkins plugin that allows parameters to be populated dynamically using
 JSON data from configurable sources.
 
 [![Plugin](https://img.shields.io/jenkins/plugin/v/json-parameter.svg)](https://plugins.jenkins.io/json-parameter)
-[![Build](https://ci.jenkins.io/job/Plugins/job/json-parameter-plugin/job/main/badge/icon)](https://ci.jenkins.io/job/Plugins/job/json-parameter-plugin/job/main)
 [![Security Scan](https://github.com/jenkinsci/json-parameter-plugin/actions/workflows/jenkins-security-scan.yaml/badge.svg)](https://github.com/jenkinsci/json-parameter-plugin/actions/workflows/jenkins-security-scan.yaml)
 <!--
 [![Plugin Installs](https://img.shields.io/jenkins/plugin/i/json-parameter.svg?color=blue&label=installations)](https://plugins.jenkins.io/json-parameter)
