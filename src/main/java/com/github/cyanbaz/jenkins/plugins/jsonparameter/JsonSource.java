@@ -58,13 +58,14 @@ public abstract class JsonSource extends AbstractDescribableImpl<JsonSource> imp
         ListBoxModel model = new ListBoxModel();
         try {
             String json = loadJson();
-            List<String> values = JsonPath.read(json, query);
+            List<Object> values = JsonPath.read(json, query);
             if (values.isEmpty()) {
                 return JsonResult.failure(Messages.error_no_data());
             }
-            for (String value : values) {
-                model.add(value, value);
-            }
+            values.forEach(value -> {
+                String valueString = String.valueOf(value);
+                model.add(valueString, valueString);
+            });
         } catch (Exception e) {
             return JsonResult.failure(e.getMessage());
         }
