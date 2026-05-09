@@ -6,7 +6,7 @@ package com.github.cyanbaz.jenkins.plugins.jsonparameter;
 
 import com.jayway.jsonpath.JsonPath;
 import hudson.ExtensionPoint;
-import hudson.model.AbstractDescribableImpl;
+import hudson.model.Describable;
 import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.io.Serial;
@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @author Caner Yanbaz
  */
-public abstract class JsonSource extends AbstractDescribableImpl<JsonSource> implements ExtensionPoint, Serializable {
+public abstract class JsonSource implements ExtensionPoint, Serializable, Describable<JsonSource> {
 
     @Serial
     private static final long serialVersionUID = 1L;
