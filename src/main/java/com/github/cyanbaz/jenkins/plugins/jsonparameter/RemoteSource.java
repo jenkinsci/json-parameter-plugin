@@ -159,6 +159,7 @@ public class RemoteSource extends JsonSource {
         }
     }
 
+    @SuppressWarnings("resource")
     private String executeRequest(HttpRequest request) throws IOException, InterruptedException {
         HttpClient client = ProxyConfiguration.newHttpClient();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
